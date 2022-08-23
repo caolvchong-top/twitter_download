@@ -43,6 +43,3 @@ pip3 install requirements.txt
 
 ![QQ图片20220823152919](https://user-images.githubusercontent.com/57820488/186098305-dd0db6fb-7094-4399-9dd0-7f9ed65bddb7.png)
 
-![QQ图片20220823153021](https://user-images.githubusercontent.com/57820488/186098322-346bc0a0-fe58-4b65-8931-24bfee707866.png)
-
-

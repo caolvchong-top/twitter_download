@@ -5,16 +5,13 @@ import re
 import os
 from multiprocessing import Pool
 
-def main_download(photo_url:str,user_name):     #用pool.apply_async传入
+def main_download(photo_url:str,user_name,proxies):     #用pool.apply_async传入
     re_rule='media\/(.*?)\?name'
     file_name=re.findall(re_rule,photo_url)[0]
     file_path=user_name+'/'+file_name
     ua=UserAgent()
     headers={
         'user-agent':ua.random
-        }
-    proxies={
-        'https':'127.0.0.1:8888'
         }
     try:
         response=requests.get(photo_url,headers=headers,proxies=proxies).content
@@ -53,7 +50,7 @@ class Inf_Collection():
             os.makedirs(name)
         pool=Pool()
         for i in self.photo_url:
-            pool.apply_async(main_download,args=(i,name,))
+            pool.apply_async(main_download,args=(i,name,proxies,))
         pool.close()
         pool.join()
 

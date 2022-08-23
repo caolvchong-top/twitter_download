@@ -93,14 +93,14 @@ class Inf_Collection():
                 if 'cursorType' not in i['content']:      #判断是否到底 (看有没有页码信息)
                     if 'itemContent' in i['content'] and 'extended_entities' in i['content']['itemContent']['tweet_results']['result']['legacy']:
                         _url_lst=[
-                            x['media_url_https']
+                            x['media_url_https']+'?name=orig'      #默认下载原始大小的(所有格式:small,large,orig)
                             for x in i['content']['itemContent']['tweet_results']['result']['legacy']['extended_entities']['media']
                             if x['type']=='photo'
                             ]
                     elif 'items' in i['content'] and 'clientEventInfo' not in i['content'] and 'extended_entities' in i['content']['items'][0]['item']['itemContent']['tweet_results']['result']['legacy']:
                     #特殊情况，从页面上看是一条推文引用了另一条推文，所以content后面跟的items(列表形式)
                         _url_lst=[
-                            x['media_url_https']
+                            x['media_url_https']+'?name=orig'
                             for x in i['content']['items'][0]['item']['itemContent']['tweet_results']['result']['legacy']['extended_entities']['media']
                             if x['type']=='photo'
                             ]
@@ -112,13 +112,13 @@ class Inf_Collection():
                 if 'cursorType' not in i['content']:
                     if 'itemContent' in i['content'] and 'retweeted_status_result' not in i['content']['itemContent']['tweet_results']['result']['legacy'] and 'extended_entities' in i['content']['itemContent']['tweet_results']['result']['legacy']:
                         _url_lst=[
-                            x['media_url_https']+'?name=orig'      #默认下载原始大小的(所有格式:small,large,orig)
+                            x['media_url_https']+'?name=orig'
                             for x in i['content']['itemContent']['tweet_results']['result']['legacy']['extended_entities']['media']
                             if x['type']=='photo'
                             ]
                     elif 'items' in i['content'] and 'clientEventInfo' not in i['content'] and 'retweeted_status_result'not in i['content']['items'][0]['item']['itemContent']['tweet_results']['result']['legacy'] and 'extended_entities' in i['content']['items'][0]['item']['itemContent']['tweet_results']['result']['legacy']:
                         _url_lst=[
-                            x['media_url_https']
+                            x['media_url_https']+'?name=orig'
                             for x in i['content']['items'][0]['item']['itemContent']['tweet_results']['result']['legacy']['extended_entities']['media']
                             if x['type']=='photo'
                             ]

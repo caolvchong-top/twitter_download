@@ -31,9 +31,7 @@ class Inf_Collection():
         self.screen_name=screen_name      #用户名，@ 符号后面的那个
         self.ua=UserAgent()
         self.url_1='https://twitter.com/i/api/graphql/gr8Lk09afdgWo7NvzP89iQ/UserByScreenName?variables={"screen_name":"'+self.screen_name+'","withSafetyModeUserFields":true,"withSuperFollowsUserFields":true}'
-        self.proxies={
-            'https':'127.0.0.1:8888',
-            }
+        self.proxies=proxies
         re_token='ct0=(.*?);'
         csrf_token=re.findall(re_token,cookie)[0]
         self.headers={      #下面这几条都是必要的

@@ -59,7 +59,7 @@ def print_info(_user_info):
         用户名:{_user_info.screen_name}
         数字ID:{_user_info.rest_id}
         总推数(含转推):{_user_info.statuses_count}
-        含图片/视频推数(不含转推):{_user_info.media_count}
+        含图片/视频/音频推数(不含转推):{_user_info.media_count}
         <==================>
         开始爬取...
         '''
@@ -145,7 +145,6 @@ def download_control(_user_info):
 
 def main(_user_info: object):
     re_token = 'ct0=(.*?);'
-    print(_user_info.screen_name)
     _headers['x-csrf-token'] = re.findall(re_token,_headers['cookie'])[0]
     _headers['referer'] = 'https://twitter.com/' + _user_info.screen_name
     if not get_other_info(_user_info):

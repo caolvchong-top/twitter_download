@@ -1,7 +1,15 @@
 # 推特图片下载    ⟵(๑¯◡¯๑) 
 推特图片爬虫，以用户名为参数，爬取该用户推文中的图片(默认为**原图**) 
 
-支持排除转推内容 & 下载指定区间内容 
+支持排除转推内容 & 多用户爬取 
+
+**目前老马加了API的请求次数限制** 
+``` 
+Rate limit exceeded 
+即表示请求次数已达限制,过会再试吧 
+爬完一个用户需要调用的API次数约为:总推数(含转推) / 19 
+图片下载不计入次数 
+``` 
 
 部署
 --- 
@@ -10,12 +18,13 @@
 ``` 
 git clone https://github.com/caolvchong-top/twitter_download.git 
 cd twitter_download 
-pip3 install requirements.txt 
+pip3 install httpx
 ``` 
 **运行** : 
-
-`python3 start.py` 
-
+``` 
+配置settings.json文件
+python3 main.py 
+``` 
 **Windows** 可以在release里拿打包好的版本 
 
 注意事项

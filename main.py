@@ -89,7 +89,7 @@ def get_download_url(_user_info) -> list:
                 _photo_lst.remove(i)
         return _photo_lst
 
-    print(f'已下载:{_user_info.count}')
+    print(f'已下载图片:{_user_info.count}')
     url_top = 'https://twitter.com/i/api/graphql/2GIWTr7XwadIixZDtyXd4A/UserTweets?variables={"userId":"' + _user_info.rest_id + '","count":20,'
     url_bottom = '"includePromotedContent":false,"withQuickPromoteEligibilityTweetFields":true,"withVoice":true,"withV2Timeline":true}&features={"rweb_lists_timeline_redesign_enabled":true,"responsive_web_graphql_exclude_directive_enabled":true,"verified_phone_label_enabled":false,"creator_subscriptions_tweet_preview_api_enabled":true,"responsive_web_graphql_timeline_navigation_enabled":true,"responsive_web_graphql_skip_user_profile_image_extensions_enabled":false,"tweetypie_unmention_optimization_enabled":true,"responsive_web_edit_tweet_api_enabled":true,"graphql_is_translatable_rweb_tweet_is_translatable_enabled":true,"view_counts_everywhere_api_enabled":true,"longform_notetweets_consumption_enabled":true,"responsive_web_twitter_article_tweet_consumption_enabled":false,"tweet_awards_web_tipping_enabled":false,"freedom_of_speech_not_reach_fetch_enabled":true,"standardized_nudges_misinfo":true,"tweet_with_visibility_results_prefer_gql_limited_actions_policy_enabled":true,"longform_notetweets_rich_text_read_enabled":true,"longform_notetweets_inline_media_enabled":true,"responsive_web_media_download_video_enabled":false,"responsive_web_enhance_cards_enabled":false}&fieldToggles={"withAuxiliaryUserLabels":false,"withArticleRichContentState":false}'
     if _user_info.cursor:
@@ -106,7 +106,7 @@ def get_download_url(_user_info) -> list:
             return False
         photo_lst = get_url_from_content(raw_data)
         if not photo_lst:
-            return False
+            photo_lst.append(True)
     except Exception:
         print('获取推文信息错误')
         print(response)
@@ -138,6 +138,8 @@ def download_control(_user_info):
             photo_lst = get_download_url(_user_info)
             if not photo_lst:
                 break
+            elif photo_lst[0] == True:
+                continue
             await asyncio.gather(*[asyncio.create_task(down_save(url,order)) for order,url in enumerate(photo_lst)])
             _user_info.count += len(photo_lst)      #更新计数
 

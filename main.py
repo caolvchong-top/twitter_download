@@ -9,6 +9,7 @@ from user_info import User_info
 #读取配置
 log_output = False
 has_retweet = False
+has_video = False
 with open('settings.json', 'r', encoding='utf8') as f:
     settings = json.load(f)
     if not settings['save_path']:
@@ -16,6 +17,8 @@ with open('settings.json', 'r', encoding='utf8') as f:
     settings['save_path'] += os.sep
     if settings['has_retweet']:
         has_retweet = True
+    if settings['has_video']:
+        has_video = True
     if settings['log_output']:
         log_output = True
     img_format = settings['img_format']
@@ -66,6 +69,18 @@ def print_info(_user_info):
     )
 
 def get_download_url(_user_info) -> list:
+
+    def get_heighest_video_quality(variants:list) -> str:   #找到最高质量的视频地址,并返回
+        max_bitrate = 0
+        heighest_url = None
+        for i in variants:
+            if 'bitrate' in i:
+                if int(i['bitrate']) > max_bitrate:
+                    max_bitrate = int(i['bitrate'])
+                    heighest_url = i['url']
+        return heighest_url
+
+
     def get_url_from_content(content: list) -> list:
         _photo_lst = []
         for i in content:
@@ -73,25 +88,31 @@ def get_download_url(_user_info) -> list:
                 if 'tweet' in i['entryId']:     #正常推文
                     a = i['content']['itemContent']['tweet_results']['result']['legacy']
                     if 'extended_entities' in a and 'retweeted_status_result' not in a:
-                        _photo_lst += [_media['media_url_https'] for _media in a['extended_entities']['media']]
-                    elif 'retweeted_status_result' in a and has_retweet and 'extended_entities' in a['retweeted_status_result']['result']['legacy']:    #判断是否为转推,以及是否获取转推
-                        _photo_lst += [_media['media_url_https'] for _media in a['retweeted_status_result']['result']['legacy']['extended_entities']['media']]
+                        _photo_lst += [get_heighest_video_quality(_media['video_info']['variants']) if 'video_info' in _media and has_video else _media['media_url_https'] for _media in a['extended_entities']['media']]
+                    
+                    elif 'retweeted_status_result' in a and 'extended_entities' in a['retweeted_status_result']['result']['legacy']:    #判断是否为转推,以及是否获取转推
+                        _photo_lst += [get_heighest_video_quality(_media['video_info']['variants']) if 'video_info' in _media and has_video else _media['media_url_https'] for _media in a['retweeted_status_result']['result']['legacy']['extended_entities']['media']]
+                
                 elif 'profile-conversation' in i['entryId']:    #回复的推文(对话线索)
                     a = i['content']['items'][0]['item']['itemContent']['tweet_results']['result']['legacy']
                     if 'extended_entities' in a:
-                        _photo_lst += [_media['media_url_https'] for _media in a['extended_entities']['media']]
+                        _photo_lst += [get_heighest_video_quality(_media['video_info']['variants']) if 'video_info' in _media and has_video else _media['media_url_https'] for _media in a['extended_entities']['media']]
+
             except Exception:
                 continue
             if 'cursor-bottom' in i['entryId']:     #更新下一页的请求编号
                 _user_info.cursor = i['content']['value']
-        for i in _photo_lst[::]:        #排除掉视频等其它的封面图片
-            if 'https://pbs.twimg.com/media/' not in i:
-                _photo_lst.remove(i)
+
         return _photo_lst
 
-    print(f'已下载图片:{_user_info.count}')
-    url_top = 'https://twitter.com/i/api/graphql/2GIWTr7XwadIixZDtyXd4A/UserTweets?variables={"userId":"' + _user_info.rest_id + '","count":20,'
-    url_bottom = '"includePromotedContent":false,"withQuickPromoteEligibilityTweetFields":true,"withVoice":true,"withV2Timeline":true}&features={"rweb_lists_timeline_redesign_enabled":true,"responsive_web_graphql_exclude_directive_enabled":true,"verified_phone_label_enabled":false,"creator_subscriptions_tweet_preview_api_enabled":true,"responsive_web_graphql_timeline_navigation_enabled":true,"responsive_web_graphql_skip_user_profile_image_extensions_enabled":false,"tweetypie_unmention_optimization_enabled":true,"responsive_web_edit_tweet_api_enabled":true,"graphql_is_translatable_rweb_tweet_is_translatable_enabled":true,"view_counts_everywhere_api_enabled":true,"longform_notetweets_consumption_enabled":true,"responsive_web_twitter_article_tweet_consumption_enabled":false,"tweet_awards_web_tipping_enabled":false,"freedom_of_speech_not_reach_fetch_enabled":true,"standardized_nudges_misinfo":true,"tweet_with_visibility_results_prefer_gql_limited_actions_policy_enabled":true,"longform_notetweets_rich_text_read_enabled":true,"longform_notetweets_inline_media_enabled":true,"responsive_web_media_download_video_enabled":false,"responsive_web_enhance_cards_enabled":false}&fieldToggles={"withAuxiliaryUserLabels":false,"withArticleRichContentState":false}'
+    print(f'已下载图片/视频:{_user_info.count}')
+    if has_retweet:     #包含转推调用[UserTweets]的API(调用一次上限返回20条)
+        url_top = 'https://twitter.com/i/api/graphql/2GIWTr7XwadIixZDtyXd4A/UserTweets?variables={"userId":"' + _user_info.rest_id + '","count":20,'
+        url_bottom = '"includePromotedContent":false,"withQuickPromoteEligibilityTweetFields":true,"withVoice":true,"withV2Timeline":true}&features={"rweb_lists_timeline_redesign_enabled":true,"responsive_web_graphql_exclude_directive_enabled":true,"verified_phone_label_enabled":false,"creator_subscriptions_tweet_preview_api_enabled":true,"responsive_web_graphql_timeline_navigation_enabled":true,"responsive_web_graphql_skip_user_profile_image_extensions_enabled":false,"tweetypie_unmention_optimization_enabled":true,"responsive_web_edit_tweet_api_enabled":true,"graphql_is_translatable_rweb_tweet_is_translatable_enabled":true,"view_counts_everywhere_api_enabled":true,"longform_notetweets_consumption_enabled":true,"responsive_web_twitter_article_tweet_consumption_enabled":false,"tweet_awards_web_tipping_enabled":false,"freedom_of_speech_not_reach_fetch_enabled":true,"standardized_nudges_misinfo":true,"tweet_with_visibility_results_prefer_gql_limited_actions_policy_enabled":true,"longform_notetweets_rich_text_read_enabled":true,"longform_notetweets_inline_media_enabled":true,"responsive_web_media_download_video_enabled":false,"responsive_web_enhance_cards_enabled":false}&fieldToggles={"withAuxiliaryUserLabels":false,"withArticleRichContentState":false}'
+    else:       #不包含转推则调用[UserMedia]的API(返回条数貌似无上限/改count)
+        url_top = 'https://twitter.com/i/api/graphql/Le6KlbilFmSu-5VltFND-Q/UserMedia?variables={"userId":"' + _user_info.rest_id + '","count":500,'
+        url_bottom = '"includePromotedContent":false,"withClientEventToken":false,"withBirdwatchNotes":false,"withVoice":true,"withV2Timeline":true}&features={"responsive_web_graphql_exclude_directive_enabled":true,"verified_phone_label_enabled":false,"creator_subscriptions_tweet_preview_api_enabled":true,"responsive_web_graphql_timeline_navigation_enabled":true,"responsive_web_graphql_skip_user_profile_image_extensions_enabled":false,"tweetypie_unmention_optimization_enabled":true,"responsive_web_edit_tweet_api_enabled":true,"graphql_is_translatable_rweb_tweet_is_translatable_enabled":true,"view_counts_everywhere_api_enabled":true,"longform_notetweets_consumption_enabled":true,"responsive_web_twitter_article_tweet_consumption_enabled":false,"tweet_awards_web_tipping_enabled":false,"freedom_of_speech_not_reach_fetch_enabled":true,"standardized_nudges_misinfo":true,"tweet_with_visibility_results_prefer_gql_limited_actions_policy_enabled":true,"longform_notetweets_rich_text_read_enabled":true,"longform_notetweets_inline_media_enabled":true,"responsive_web_media_download_video_enabled":false,"responsive_web_enhance_cards_enabled":false}'
+
     if _user_info.cursor:
         url = url_top + '"cursor":"' + _user_info.cursor + '",' + url_bottom
     else:
@@ -116,22 +137,38 @@ def get_download_url(_user_info) -> list:
 def download_control(_user_info):
     async def _main():
         async def down_save(url, order: int):
-            re_rule = 'media/(.*?)\.[jpg|png]{3}'
-            file_name = re.findall(re_rule,url)[0]      #不含后缀
-            url += f'?format={img_format}&name=4096x4096'
+            if '.mp4' in url:
+                if '?tag' in url:
+                    re_rule = 'x\d*?/(.*?)\.mp4\?tag'
+                re_rule = '/(.*?)\.mp4'
+                file_name = re.findall(re_rule,url)[0]      #不含后缀名
+                file_name = del_special_char(file_name)
+                _file_name = f'{_user_info.save_path + os.sep}{_user_info.count + order}_{file_name}.mp4'
+            else:
+                try:
+                    re_rule = 'media/(.*?)\.[jpg|png]{3}'
+                    file_name = re.findall(re_rule,url)[0]
+                    _file_name = f'{_user_info.save_path + os.sep}{_user_info.count + order}_{file_name}.{img_format}'
+                    url += f'?format={img_format}&name=4096x4096'
+                except Exception as e:
+                    print(url)
+                    return False
+            count = 0
             while True:
                 try:
                     async with httpx.AsyncClient() as client:
                         global down_count
-                        response = await client.get(url)
+                        response = await client.get(url, timeout=(3.05, 16))        #如果出现第五次或以上的下载失败,且确认不是网络问题,可以适当调高超时时间(默认为16s)
                         down_count += 1
-                    with open(f'{_user_info.save_path + os.sep}{_user_info.count + order}_{file_name}.{img_format}','wb') as f:
+                    with open(_file_name,'wb') as f:
                         f.write(response.content)
                     if log_output:
                         print(f'{file_name}=====>下载完成')
+            
                     break
-                except Exception:
-                    print(f'{file_name}=====>下载失败,重试')
+                except Exception as e:
+                    count += 1
+                    print(f'{file_name}=====>第{count}次下载失败,正在重试')
                     print(url)
 
         while True:
@@ -169,4 +206,4 @@ if __name__=='__main__':
     _start = time.time()
     for i in settings['user_lst'].split(','):
         main(User_info(i))
-    print(f'共耗时:{time.time()-_start}秒\n共调用{request_count}次API\n共下载{down_count}张图片')
+    print(f'共耗时:{time.time()-_start}秒\n共调用{request_count}次API\n共下载{down_count}份图片/视频')

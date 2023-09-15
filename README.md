@@ -25,30 +25,24 @@ pip3 install httpx
 配置settings.json文件
 python3 main.py 
 ``` 
-**Windows** 可以在release里拿打包好的版本 
+**Windows** 和上面的一样，配置完setting.json后运行main.py即可 
 
 注意事项
 ---
+**settings.json** 
 
-![QQ图片20220823151206](https://user-images.githubusercontent.com/57820488/186094395-c715fbdd-7297-43e1-bd07-11090823fb63.png)  
+![20230720140443](https://github.com/caolvchong-top/twitter_download/assets/57820488/c0adb9e0-6039-417d-a271-577740360d1c)
 
-**代理格式**  
-1.  
-`{'https':'代理地址'}`
-
-2.本机开了VPN的请按下面这个格式填  
-`{'https':'127.0.0.1:<port>'}`  
-
-例：  
-`{'https':'127.0.0.1:8888'}`  
-
-**尽量不要一次性下载太多，可能会被封IP**
 
 运行截图 
 ---
-![QQ图片20220823152042](https://user-images.githubusercontent.com/57820488/186098262-428a3693-4b3b-46f7-b732-7031d0aa6cef.png)
+![20230720134231](https://github.com/caolvchong-top/twitter_download/assets/57820488/ee6a1c13-2b0c-47e9-a260-1ac529bec678) 
 
-![QQ图片20220823152759](https://user-images.githubusercontent.com/57820488/186098291-1ac763c0-bc37-40e2-8d2d-e0f38d8703de.png)
+**↑↑图是bug修复前的，仅效果参考**
 
-![QQ图片20220823152919](https://user-images.githubusercontent.com/57820488/186098305-dd0db6fb-7094-4399-9dd0-7f9ed65bddb7.png)
+![20230720134253](https://github.com/caolvchong-top/twitter_download/assets/57820488/6e5ba42f-2dc4-4fa1-8cf6-152246378756)
+
+![20230720135731](https://github.com/caolvchong-top/twitter_download/assets/57820488/8c167bf1-a497-4466-b81c-3f9760ac56e8)
+
+![20230720135833](https://github.com/caolvchong-top/twitter_download/assets/57820488/6361f411-0d46-4371-9de8-425372706077)
 

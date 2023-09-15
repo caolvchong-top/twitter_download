@@ -71,6 +71,10 @@ def print_info(_user_info):
 def get_download_url(_user_info) -> list:
 
     def get_heighest_video_quality(variants:list) -> str:   #找到最高质量的视频地址,并返回
+
+        if len(variants) == 1:      #gif适配
+            return variants[0]['url']
+        
         max_bitrate = 0
         heighest_url = None
         for i in variants:
@@ -85,6 +89,8 @@ def get_download_url(_user_info) -> list:
         _photo_lst = []
         for i in content:
             try:
+                if 'promoted-tweet' in i['entryId']:        #排除广告
+                    continue
                 if 'tweet' in i['entryId']:     #正常推文
                     a = i['content']['itemContent']['tweet_results']['result']['legacy']
                     if 'extended_entities' in a and 'retweeted_status_result' not in a:
@@ -140,7 +146,8 @@ def download_control(_user_info):
             if '.mp4' in url:
                 if '?tag' in url:
                     re_rule = 'x\d*?/(.*?)\.mp4\?tag'
-                re_rule = '/(.*?)\.mp4'
+                else:   #对gif适配
+                    re_rule = '.*/(.*?).mp4'
                 file_name = re.findall(re_rule,url)[0]      #不含后缀名
                 file_name = del_special_char(file_name)
                 _file_name = f'{_user_info.save_path + os.sep}{_user_info.count + order}_{file_name}.mp4'

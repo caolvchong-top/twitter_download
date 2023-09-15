@@ -1,16 +1,22 @@
 {
     "save_path": "",
     "save_path_info": "就算是windows路径也请用 '/' ,而不是反斜杠(可以留空)",
-    "user_lst": "saltiefishy,ig_lily,lilmonix3",
+
+    "user_lst": "motions_cat,lilmonix3",
     "user_lst_info": "填入要下载的用户名(@后面的字符),支持多用户下载,用户名字间逗号(英文逗号)隔开",
+
     "cookie": "",
     "cookie_info": "填入完整cookie,会失效,运行前记得更新 //重要:cookie内的双引号记得手动加上  反斜杠  转义(应该有四处要加)",
+
     "has_retweet": false,
     "has_retweet_info": "是否包含转推 (包含转推会消耗大量API调用次数)",
+
     "img_format": "png",
     "img_format_info": "下载图片/视频的格式(png为高质量,jpg为标准质量)",
+
     "has_video": true,
     "has_video_info": "是否下载推文中的视频",
+
     "log_output": false,
     "log_output_info": "是否需要下载过程日志输出",
 

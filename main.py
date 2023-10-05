@@ -1,15 +1,46 @@
 import re
 import time
+from datetime import datetime
 import httpx
 import asyncio
 import os
 import json
 from user_info import User_info
 
+def del_special_char(string):
+    string = re.sub(u'[^\u4e00-\u9fa5\u0030-\u0039\u0041-\u005a\u0061-\u007a\u3040-\u31FF\.]', '', string)
+    return string
+
+def stamp2time(msecs_stamp:int) -> str:
+    timeArray = time.localtime(msecs_stamp/1000)
+    otherStyleTime = time.strftime("%Y-%m-%d", timeArray)
+    return otherStyleTime
+
+def time2stamp(timestr:str) -> int:
+    datetime_obj = datetime.strptime(timestr, "%Y-%m-%d")
+    msecs_stamp = int(time.mktime(datetime_obj.timetuple()) * 1000.0 + datetime_obj.microsecond / 1000.0)
+    return msecs_stamp
+
+def time_comparison(now, start, end) -> list[bool, bool]:
+    start_label = True
+    start_down  = False
+    #twitter : latest -> old
+    if now >= start and now <= end:     #符合时间条件，下载
+        start_down = True
+    elif now < start:     #超出时间范围，结束
+        start_label = False
+    return [start_down, start_label]
+
+
 #读取配置
 log_output = False
 has_retweet = False
 has_video = False
+
+start_time_stamp = 655028357000   #1990-10-04
+end_time_stamp = 2548484357000    #2050-10-04
+start_label = True
+
 with open('settings.json', 'r', encoding='utf8') as f:
     settings = json.load(f)
     if not settings['save_path']:
@@ -17,6 +48,10 @@ with open('settings.json', 'r', encoding='utf8') as f:
     settings['save_path'] += os.sep
     if settings['has_retweet']:
         has_retweet = True
+    if settings['time_range']:
+        time_range = True
+        start_time,end_time = settings['time_range'].split(':')
+        start_time_stamp,end_time_stamp = time2stamp(start_time),time2stamp(end_time)
     if settings['has_video']:
         has_video = True
     if settings['log_output']:
@@ -32,10 +67,6 @@ _headers['cookie'] = settings['cookie']
 
 request_count = 0    #请求次数计数
 down_count = 0      #下载图片数计数
-
-def del_special_char(string):
-    string = re.sub(u'[^\u4e00-\u9fa5\u0030-\u0039\u0041-\u005a\u0061-\u007a\u3040-\u31FF\.]', '', string)
-    return string
 
 def get_other_info(_user_info):
     url = 'https://twitter.com/i/api/graphql/xc8f1g7BYqr6VTzTbvNlGw/UserByScreenName?variables={"screen_name":"' + _user_info.screen_name + '","withSafetyModeUserFields":false}&features={"hidden_profile_likes_enabled":false,"hidden_profile_subscriptions_enabled":false,"responsive_web_graphql_exclude_directive_enabled":true,"verified_phone_label_enabled":false,"subscriptions_verification_info_verified_since_enabled":true,"highlights_tweets_tab_ui_enabled":true,"creator_subscriptions_tweet_preview_api_enabled":true,"responsive_web_graphql_skip_user_profile_image_extensions_enabled":false,"responsive_web_graphql_timeline_navigation_enabled":true}&fieldToggles={"withAuxiliaryUserLabels":false}'
@@ -85,7 +116,8 @@ def get_download_url(_user_info) -> list:
         return heighest_url
 
 
-    def get_url_from_content(content: list) -> list:
+    def get_url_from_content(content: list) -> list[tuple]:
+        global start_label
         _photo_lst = []
         for i in content:
             try:
@@ -93,18 +125,35 @@ def get_download_url(_user_info) -> list:
                     continue
                 if 'tweet' in i['entryId']:     #正常推文
                     a = i['content']['itemContent']['tweet_results']['result']['legacy']
-                    if 'extended_entities' in a and 'retweeted_status_result' not in a:
-                        _photo_lst += [get_heighest_video_quality(_media['video_info']['variants']) if 'video_info' in _media and has_video else _media['media_url_https'] for _media in a['extended_entities']['media']]
-                    
-                    elif 'retweeted_status_result' in a and 'extended_entities' in a['retweeted_status_result']['result']['legacy']:    #判断是否为转推,以及是否获取转推
-                        _photo_lst += [get_heighest_video_quality(_media['video_info']['variants']) if 'video_info' in _media and has_video else _media['media_url_https'] for _media in a['retweeted_status_result']['result']['legacy']['extended_entities']['media']]
+                    tweet_msecs = int(i['content']['itemContent']['tweet_results']['result']['edit_control']['editable_until_msecs'])
+                    timestr = stamp2time(tweet_msecs)
+
+                    _result = time_comparison(tweet_msecs, start_time_stamp, end_time_stamp)
+                    if _result[0]:  #符合时间限制
+                        if 'extended_entities' in a and 'retweeted_status_result' not in a:
+                            _photo_lst += [(get_heighest_video_quality(_media['video_info']['variants']), f'{timestr}-vid') if 'video_info' in _media and has_video else (_media['media_url_https'], f'{timestr}-img') for _media in a['extended_entities']['media']]
+
+                        
+                        elif 'retweeted_status_result' in a and 'extended_entities' in a['retweeted_status_result']['result']['legacy']:    #判断是否为转推,以及是否获取转推
+                            _photo_lst += [(get_heighest_video_quality(_media['video_info']['variants']), f'retweet-{timestr}-vid') if 'video_info' in _media and has_video else (_media['media_url_https'], f'retweet-{timestr}-img') for _media in a['retweeted_status_result']['result']['legacy']['extended_entities']['media']]
+                    elif not _result[1]:    #已超出目标时间范围
+                        start_label = False
+                        break
                 
                 elif 'profile-conversation' in i['entryId']:    #回复的推文(对话线索)
                     a = i['content']['items'][0]['item']['itemContent']['tweet_results']['result']['legacy']
-                    if 'extended_entities' in a:
-                        _photo_lst += [get_heighest_video_quality(_media['video_info']['variants']) if 'video_info' in _media and has_video else _media['media_url_https'] for _media in a['extended_entities']['media']]
+                    tweet_msecs = int(i['content']['items'][0]['item']['itemContent']['tweet_results']['result']['edit_control']['editable_until_msecs'])
+                    timestr = stamp2time(tweet_msecs)
 
-            except Exception:
+                    _result = time_comparison(tweet_msecs, start_time_stamp, end_time_stamp)
+                    if _result[0]:  #符合时间限制
+                        if 'extended_entities' in a:
+                            _photo_lst += [(get_heighest_video_quality(_media['video_info']['variants']), f'{timestr}-vid') if 'video_info' in _media and has_video else (_media['media_url_https'], f'{timestr}-img') for _media in a['extended_entities']['media']]
+                    elif not _result[1]:    #已超出目标时间范围
+                        start_label = False
+                        break
+
+            except Exception as e:
                 continue
             if 'cursor-bottom' in i['entryId']:     #更新下一页的请求编号
                 _user_info.cursor = i['content']['value']
@@ -131,7 +180,12 @@ def get_download_url(_user_info) -> list:
         raw_data = raw_data['data']['user']['result']['timeline_v2']['timeline']['instructions'][-1]['entries']
         if 'cursor-top' in raw_data[0]['entryId']:      #所有推文已全部下载完成
             return False
-        photo_lst = get_url_from_content(raw_data)
+        
+        if start_label:     #判断是否超出时间范围
+            photo_lst = get_url_from_content(raw_data)
+        else:
+            return False
+        
         if not photo_lst:
             photo_lst.append(True)
     except Exception:
@@ -142,7 +196,7 @@ def get_download_url(_user_info) -> list:
 
 def download_control(_user_info):
     async def _main():
-        async def down_save(url, order: int):
+        async def down_save(url, prefix, order: int):
             if '.mp4' in url:
                 if '?tag' in url:
                     re_rule = 'x\d*?/(.*?)\.mp4\?tag'
@@ -150,12 +204,12 @@ def download_control(_user_info):
                     re_rule = '.*/(.*?).mp4'
                 file_name = re.findall(re_rule,url)[0]      #不含后缀名
                 file_name = del_special_char(file_name)
-                _file_name = f'{_user_info.save_path + os.sep}{_user_info.count + order}_{file_name}.mp4'
+                _file_name = f'{_user_info.save_path + os.sep}{prefix}_{_user_info.count + order}.mp4'
             else:
                 try:
                     re_rule = 'media/(.*?)\.[jpg|png]{3}'
                     file_name = re.findall(re_rule,url)[0]
-                    _file_name = f'{_user_info.save_path + os.sep}{_user_info.count + order}_{file_name}.{img_format}'
+                    _file_name = f'{_user_info.save_path + os.sep}{prefix}_{_user_info.count + order}.{img_format}'
                     url += f'?format={img_format}&name=4096x4096'
                 except Exception as e:
                     print(url)
@@ -184,7 +238,7 @@ def download_control(_user_info):
                 break
             elif photo_lst[0] == True:
                 continue
-            await asyncio.gather(*[asyncio.create_task(down_save(url,order)) for order,url in enumerate(photo_lst)])
+            await asyncio.gather(*[asyncio.create_task(down_save(url[0], url[1], order)) for order,url in enumerate(photo_lst)])
             _user_info.count += len(photo_lst)      #更新计数
 
     asyncio.run(_main())
@@ -196,14 +250,10 @@ def main(_user_info: object):
     if not get_other_info(_user_info):
         return False
     print_info(_user_info)
-    _path = settings['save_path']+del_special_char(_user_info.name)
+    _path = settings['save_path'] + _user_info.screen_name
     if not os.path.exists(_path):   #创建文件夹
-        try:
-            os.makedirs(_path)      #优先尝试用昵称建文件夹(仅限中英日或数字)
-            _user_info.save_path = _path
-        except Exception:
-            os.makedirs(settings['save_path']+_user_info.screen_name)       #不行就用用户名建文件夹
-            _user_info.save_path = settings['save_path']+_user_info.screen_name
+        os.makedirs(settings['save_path']+_user_info.screen_name)       #用户名建文件夹
+        _user_info.save_path = settings['save_path']+_user_info.screen_name
     else:
         _user_info.save_path = _path
     download_control(_user_info)
@@ -213,4 +263,6 @@ if __name__=='__main__':
     _start = time.time()
     for i in settings['user_lst'].split(','):
         main(User_info(i))
+        start_label = True
     print(f'共耗时:{time.time()-_start}秒\n共调用{request_count}次API\n共下载{down_count}份图片/视频')
+

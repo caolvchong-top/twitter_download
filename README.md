@@ -17,6 +17,8 @@ elif 不包含:
 ```
 
 # Change Log 
+* **2023-10-12**
+  * 添加 生成爬取信息 功能
 * **2023-10-06**
   * 添加 时间范围限制 功能
   * 统一文件保存格式
@@ -67,5 +69,12 @@ python3 main.py
 
 **视频下载效果**
 
-![视频下载2](https://github.com/caolvchong-top/twitter_download/assets/57820488/089ee00c-6530-452b-9b0c-1cbae9459dd2)
+![视频下载2](https://github.com/caolvchong-top/twitter_download/assets/57820488/089ee00c-6530-452b-9b0c-1cbae9459dd2) 
+
+
+**生成的CSV文件**
+
+![屏幕截图 2023-10-12 223755](https://github.com/caolvchong-top/twitter_download/assets/57820488/b5dfc741-e10f-409a-b298-d56ea236bc5f)
+
+
 

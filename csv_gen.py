@@ -3,11 +3,13 @@ import time
 
 class csv_gen():
     def __init__(self, save_path:str, user_name, screen_name, tweet_range) -> None:
-        self.f = open(f'{save_path}{screen_name}.csv', 'w', encoding='utf-8-sig', newline='')
+        self.f = open(f'{save_path}.csv', 'w', encoding='utf-8-sig', newline='')
         self.writer = csv.writer(self.f)
 
+        #初始化
         self.writer.writerow([user_name, screen_name])
         self.writer.writerow(['Tweet Range : ' + tweet_range])
+        self.writer.writerow(['Save Path : ' + save_path])
         main_par = ['Tweet Date', 'Display Name', 'User Name', 'Tweet URL', 'Media Type', 'Media URl', 'Saved Filename', 'Tweet Content']
         self.writer.writerow(main_par)
 

@@ -6,6 +6,7 @@ import asyncio
 import os
 import json
 from user_info import User_info
+from csv_gen import csv_gen
 
 def del_special_char(string):
     string = re.sub(u'[^\u4e00-\u9fa5\u0030-\u0039\u0041-\u005a\u0061-\u007a\u3040-\u31FF\.]', '', string)
@@ -36,6 +37,7 @@ def time_comparison(now, start, end) -> list[bool, bool]:
 log_output = False
 has_retweet = False
 has_video = False
+csv_file = None
 
 start_time_stamp = 655028357000   #1990-10-04
 end_time_stamp = 2548484357000    #2050-10-04
@@ -128,14 +130,17 @@ def get_download_url(_user_info) -> list:
                     tweet_msecs = int(i['content']['itemContent']['tweet_results']['result']['edit_control']['editable_until_msecs'])
                     timestr = stamp2time(tweet_msecs)
 
+                    #我知道这边代码很烂
+                    #但我实在不想重构 ( º﹃º )
+
                     _result = time_comparison(tweet_msecs, start_time_stamp, end_time_stamp)
                     if _result[0]:  #符合时间限制
                         if 'extended_entities' in a and 'retweeted_status_result' not in a:
-                            _photo_lst += [(get_heighest_video_quality(_media['video_info']['variants']), f'{timestr}-vid') if 'video_info' in _media and has_video else (_media['media_url_https'], f'{timestr}-img') for _media in a['extended_entities']['media']]
+                            _photo_lst += [(get_heighest_video_quality(_media['video_info']['variants']), f'{timestr}-vid', [tweet_msecs, _user_info.name, f'@{_user_info.screen_name}', _media['expanded_url'], 'Video', get_heighest_video_quality(_media['video_info']['variants']), '', a['full_text']]) if 'video_info' in _media and has_video else (_media['media_url_https'], f'{timestr}-img', [tweet_msecs, _user_info.name, f'@{_user_info.screen_name}', _media['expanded_url'], 'Image', _media['media_url_https'], '', a['full_text']]) for _media in a['extended_entities']['media']]
 
                         
                         elif 'retweeted_status_result' in a and 'extended_entities' in a['retweeted_status_result']['result']['legacy']:    #判断是否为转推,以及是否获取转推
-                            _photo_lst += [(get_heighest_video_quality(_media['video_info']['variants']), f'retweet-{timestr}-vid') if 'video_info' in _media and has_video else (_media['media_url_https'], f'retweet-{timestr}-img') for _media in a['retweeted_status_result']['result']['legacy']['extended_entities']['media']]
+                            _photo_lst += [(get_heighest_video_quality(_media['video_info']['variants']), f'retweet-{timestr}-vid', [tweet_msecs, a['retweeted_status_result']['result']['core']['user_results']['result']['legacy']['name'], f"@{a['retweeted_status_result']['result']['core']['user_results']['result']['legacy']['screen_name']}", _media['expanded_url'], 'Video', get_heighest_video_quality(_media['video_info']['variants']), '', a['retweeted_status_result']['result']['legacy']['full_text']]) if 'video_info' in _media and has_video else (_media['media_url_https'], f'retweet-{timestr}-img', [tweet_msecs, a['retweeted_status_result']['result']['core']['user_results']['result']['legacy']['name'], f"@{a['retweeted_status_result']['result']['core']['user_results']['result']['legacy']['screen_name']}", _media['expanded_url'], 'Image', _media['media_url_https'], '', a['retweeted_status_result']['result']['legacy']['full_text']]) for _media in a['retweeted_status_result']['result']['legacy']['extended_entities']['media']]
                     elif not _result[1]:    #已超出目标时间范围
                         start_label = False
                         break
@@ -148,7 +153,7 @@ def get_download_url(_user_info) -> list:
                     _result = time_comparison(tweet_msecs, start_time_stamp, end_time_stamp)
                     if _result[0]:  #符合时间限制
                         if 'extended_entities' in a:
-                            _photo_lst += [(get_heighest_video_quality(_media['video_info']['variants']), f'{timestr}-vid') if 'video_info' in _media and has_video else (_media['media_url_https'], f'{timestr}-img') for _media in a['extended_entities']['media']]
+                            _photo_lst += [(get_heighest_video_quality(_media['video_info']['variants']), f'{timestr}-vid', [tweet_msecs, _user_info.name, f'@{_user_info.screen_name}', _media['expanded_url'], 'Video', get_heighest_video_quality(_media['video_info']['variants']), '', a['full_text']]) if 'video_info' in _media and has_video else (_media['media_url_https'], f'{timestr}-img', [tweet_msecs, _user_info.name, f'@{_user_info.screen_name}', _media['expanded_url'], 'Image', _media['media_url_https'], '', a['full_text']]) for _media in a['extended_entities']['media']]
                     elif not _result[1]:    #已超出目标时间范围
                         start_label = False
                         break
@@ -196,7 +201,7 @@ def get_download_url(_user_info) -> list:
 
 def download_control(_user_info):
     async def _main():
-        async def down_save(url, prefix, order: int):
+        async def down_save(url, prefix, csv_info, order: int):
             if '.mp4' in url:
                 if '?tag' in url:
                     re_rule = 'x\d*?/(.*?)\.mp4\?tag'
@@ -223,6 +228,10 @@ def download_control(_user_info):
                         down_count += 1
                     with open(_file_name,'wb') as f:
                         f.write(response.content)
+
+                    csv_info[-2] = os.path.split(_file_name)[1]
+                    csv_file.data_input(csv_info)
+
                     if log_output:
                         print(f'{file_name}=====>下载完成')
             
@@ -238,7 +247,7 @@ def download_control(_user_info):
                 break
             elif photo_lst[0] == True:
                 continue
-            await asyncio.gather(*[asyncio.create_task(down_save(url[0], url[1], order)) for order,url in enumerate(photo_lst)])
+            await asyncio.gather(*[asyncio.create_task(down_save(url[0], url[1], url[2], order)) for order,url in enumerate(photo_lst)])
             _user_info.count += len(photo_lst)      #更新计数
 
     asyncio.run(_main())
@@ -256,7 +265,13 @@ def main(_user_info: object):
         _user_info.save_path = settings['save_path']+_user_info.screen_name
     else:
         _user_info.save_path = _path
+
+    global csv_file
+    csv_file = csv_gen(_user_info.save_path, _user_info.name, _user_info.screen_name, settings['time_range'])
+
     download_control(_user_info)
+
+    csv_file.csv_close()
     print(f'{_user_info.name}下载完成\n\n')
 
 if __name__=='__main__':

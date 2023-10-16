@@ -22,7 +22,7 @@ def time2stamp(timestr:str) -> int:
     msecs_stamp = int(time.mktime(datetime_obj.timetuple()) * 1000.0 + datetime_obj.microsecond / 1000.0)
     return msecs_stamp
 
-def time_comparison(now, start, end) -> list[bool, bool]:
+def time_comparison(now, start, end):
     start_label = True
     start_down  = False
     #twitter : latest -> old
@@ -101,9 +101,9 @@ def print_info(_user_info):
         '''
     )
 
-def get_download_url(_user_info) -> list:
+def get_download_url(_user_info):
 
-    def get_heighest_video_quality(variants:list) -> str:   #找到最高质量的视频地址,并返回
+    def get_heighest_video_quality(variants) -> str:   #找到最高质量的视频地址,并返回
 
         if len(variants) == 1:      #gif适配
             return variants[0]['url']
@@ -118,7 +118,7 @@ def get_download_url(_user_info) -> list:
         return heighest_url
 
 
-    def get_url_from_content(content: list) -> list[tuple]:
+    def get_url_from_content(content):
         global start_label
         _photo_lst = []
         for i in content:
@@ -203,17 +203,9 @@ def download_control(_user_info):
     async def _main():
         async def down_save(url, prefix, csv_info, order: int):
             if '.mp4' in url:
-                if '?tag' in url:
-                    re_rule = 'x\d*?/(.*?)\.mp4\?tag'
-                else:   #对gif适配
-                    re_rule = '.*/(.*?).mp4'
-                file_name = re.findall(re_rule,url)[0]      #不含后缀名
-                file_name = del_special_char(file_name)
                 _file_name = f'{_user_info.save_path + os.sep}{prefix}_{_user_info.count + order}.mp4'
             else:
                 try:
-                    re_rule = 'media/(.*?)\.[jpg|png]{3}'
-                    file_name = re.findall(re_rule,url)[0]
                     _file_name = f'{_user_info.save_path + os.sep}{prefix}_{_user_info.count + order}.{img_format}'
                     url += f'?format={img_format}&name=4096x4096'
                 except Exception as e:
@@ -233,12 +225,12 @@ def download_control(_user_info):
                     csv_file.data_input(csv_info)
 
                     if log_output:
-                        print(f'{file_name}=====>下载完成')
+                        print(f'{_file_name}=====>下载完成')
             
                     break
                 except Exception as e:
                     count += 1
-                    print(f'{file_name}=====>第{count}次下载失败,正在重试')
+                    print(f'{_file_name}=====>第{count}次下载失败,正在重试')
                     print(url)
 
         while True:

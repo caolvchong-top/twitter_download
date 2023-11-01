@@ -31,6 +31,7 @@ def time_comparison(now, start, end):
     elif now < start:     #超出时间范围，结束
         start_label = False
     return [start_down, start_label]
+    
 
 
 #读取配置
@@ -58,6 +59,12 @@ with open('settings.json', 'r', encoding='utf8') as f:
         has_video = True
     if settings['log_output']:
         log_output = True
+###### proxy ######
+    if settings['proxy']:
+        proxies = settings['proxy']
+    else:
+        proxies = None
+############
     img_format = settings['img_format']
     f.close()
 
@@ -74,7 +81,7 @@ def get_other_info(_user_info):
     url = 'https://twitter.com/i/api/graphql/xc8f1g7BYqr6VTzTbvNlGw/UserByScreenName?variables={"screen_name":"' + _user_info.screen_name + '","withSafetyModeUserFields":false}&features={"hidden_profile_likes_enabled":false,"hidden_profile_subscriptions_enabled":false,"responsive_web_graphql_exclude_directive_enabled":true,"verified_phone_label_enabled":false,"subscriptions_verification_info_verified_since_enabled":true,"highlights_tweets_tab_ui_enabled":true,"creator_subscriptions_tweet_preview_api_enabled":true,"responsive_web_graphql_skip_user_profile_image_extensions_enabled":false,"responsive_web_graphql_timeline_navigation_enabled":true}&fieldToggles={"withAuxiliaryUserLabels":false}'
     try:
         global request_count
-        response = httpx.get(url, headers=_headers).text
+        response = httpx.get(url, headers=_headers, proxies=proxies).text
         request_count += 1
         raw_data = json.loads(response)
         _user_info.rest_id = raw_data['data']['user']['result']['rest_id']
@@ -179,7 +186,7 @@ def get_download_url(_user_info):
         url = url_top + url_bottom      #第一页,无cursor
     try:
         global request_count
-        response = httpx.get(url, headers=_headers).text
+        response = httpx.get(url, headers=_headers, proxies=proxies).text
         request_count += 1
         raw_data = json.loads(response)
         raw_data = raw_data['data']['user']['result']['timeline_v2']['timeline']['instructions'][-1]['entries']
@@ -214,7 +221,7 @@ def download_control(_user_info):
             count = 0
             while True:
                 try:
-                    async with httpx.AsyncClient() as client:
+                    async with httpx.AsyncClient(proxies=proxies) as client:
                         global down_count
                         response = await client.get(url, timeout=(3.05, 16))        #如果出现第五次或以上的下载失败,且确认不是网络问题,可以适当调高超时时间(默认为16s)
                         down_count += 1
@@ -272,4 +279,3 @@ if __name__=='__main__':
         main(User_info(i))
         start_label = True
     print(f'共耗时:{time.time()-_start}秒\n共调用{request_count}次API\n共下载{down_count}份图片/视频')
-

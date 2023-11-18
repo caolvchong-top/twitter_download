@@ -133,8 +133,12 @@ def get_download_url(_user_info):
                 if 'promoted-tweet' in i['entryId']:        #排除广告
                     continue
                 if 'tweet' in i['entryId']:     #正常推文
-                    a = i['content']['itemContent']['tweet_results']['result']['legacy']
-                    tweet_msecs = int(i['content']['itemContent']['tweet_results']['result']['edit_control']['editable_until_msecs'])
+                    if 'tweet' in i['content']['itemContent']['tweet_results']['result']:
+                        a = i['content']['itemContent']['tweet_results']['result']['tweet']['legacy']       #适配限制回复账号
+                        tweet_msecs = int(i['content']['itemContent']['tweet_results']['result']['tweet']['edit_control']['editable_until_msecs'])
+                    else:
+                        a = i['content']['itemContent']['tweet_results']['result']['legacy']
+                        tweet_msecs = int(i['content']['itemContent']['tweet_results']['result']['edit_control']['editable_until_msecs'])
                     timestr = stamp2time(tweet_msecs)
 
                     #我知道这边代码很烂
@@ -153,8 +157,12 @@ def get_download_url(_user_info):
                         break
                 
                 elif 'profile-conversation' in i['entryId']:    #回复的推文(对话线索)
-                    a = i['content']['items'][0]['item']['itemContent']['tweet_results']['result']['legacy']
-                    tweet_msecs = int(i['content']['items'][0]['item']['itemContent']['tweet_results']['result']['edit_control']['editable_until_msecs'])
+                    if 'tweet' in i['content']['items'][0]['item']['itemContent']['tweet_results']['result']:
+                        a = i['content']['items'][0]['item']['itemContent']['tweet_results']['result']['tweet']['legacy']
+                        tweet_msecs = int(i['content']['items'][0]['item']['itemContent']['tweet_results']['result']['tweet']['edit_control']['editable_until_msecs'])
+                    else:
+                        a = i['content']['items'][0]['item']['itemContent']['tweet_results']['result']['legacy']
+                        tweet_msecs = int(i['content']['items'][0]['item']['itemContent']['tweet_results']['result']['edit_control']['editable_until_msecs'])
                     timestr = stamp2time(tweet_msecs)
 
                     _result = time_comparison(tweet_msecs, start_time_stamp, end_time_stamp)

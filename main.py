@@ -128,17 +128,21 @@ def get_download_url(_user_info):
     def get_url_from_content(content):
         global start_label
         _photo_lst = []
+        if has_retweet:
+            x_label = 'content'
+        else:
+            x_label = 'item'
         for i in content:
             try:
                 if 'promoted-tweet' in i['entryId']:        #排除广告
                     continue
                 if 'tweet' in i['entryId']:     #正常推文
-                    if 'tweet' in i['content']['itemContent']['tweet_results']['result']:
-                        a = i['content']['itemContent']['tweet_results']['result']['tweet']['legacy']       #适配限制回复账号
-                        tweet_msecs = int(i['content']['itemContent']['tweet_results']['result']['tweet']['edit_control']['editable_until_msecs'])
+                    if 'tweet' in i[x_label]['itemContent']['tweet_results']['result']:
+                        a = i[x_label]['itemContent']['tweet_results']['result']['tweet']['legacy']       #适配限制回复账号
+                        tweet_msecs = int(i[x_label]['itemContent']['tweet_results']['result']['tweet']['edit_control']['editable_until_msecs'])
                     else:
-                        a = i['content']['itemContent']['tweet_results']['result']['legacy']
-                        tweet_msecs = int(i['content']['itemContent']['tweet_results']['result']['edit_control']['editable_until_msecs'])
+                        a = i[x_label]['itemContent']['tweet_results']['result']['legacy']
+                        tweet_msecs = int(i[x_label]['itemContent']['tweet_results']['result']['edit_control']['editable_until_msecs'])
                     timestr = stamp2time(tweet_msecs)
 
                     #我知道这边代码很烂
@@ -157,12 +161,12 @@ def get_download_url(_user_info):
                         break
                 
                 elif 'profile-conversation' in i['entryId']:    #回复的推文(对话线索)
-                    if 'tweet' in i['content']['items'][0]['item']['itemContent']['tweet_results']['result']:
-                        a = i['content']['items'][0]['item']['itemContent']['tweet_results']['result']['tweet']['legacy']
-                        tweet_msecs = int(i['content']['items'][0]['item']['itemContent']['tweet_results']['result']['tweet']['edit_control']['editable_until_msecs'])
+                    if 'tweet' in i[x_label]['items'][0]['item']['itemContent']['tweet_results']['result']:
+                        a = i[x_label]['items'][0]['item']['itemContent']['tweet_results']['result']['tweet']['legacy']
+                        tweet_msecs = int(i[x_label]['items'][0]['item']['itemContent']['tweet_results']['result']['tweet']['edit_control']['editable_until_msecs'])
                     else:
-                        a = i['content']['items'][0]['item']['itemContent']['tweet_results']['result']['legacy']
-                        tweet_msecs = int(i['content']['items'][0]['item']['itemContent']['tweet_results']['result']['edit_control']['editable_until_msecs'])
+                        a = i[x_label]['items'][0]['item']['itemContent']['tweet_results']['result']['legacy']
+                        tweet_msecs = int(i[x_label]['items'][0]['item']['itemContent']['tweet_results']['result']['edit_control']['editable_until_msecs'])
                     timestr = stamp2time(tweet_msecs)
 
                     _result = time_comparison(tweet_msecs, start_time_stamp, end_time_stamp)
@@ -175,7 +179,7 @@ def get_download_url(_user_info):
 
             except Exception as e:
                 continue
-            if 'cursor-bottom' in i['entryId']:     #更新下一页的请求编号
+            if 'cursor-bottom' in i['entryId']:     #更新下一页的请求编号(含转推模式专用)
                 _user_info.cursor = i['content']['value']
 
         return _photo_lst
@@ -184,7 +188,7 @@ def get_download_url(_user_info):
     if has_retweet:     #包含转推调用[UserTweets]的API(调用一次上限返回20条)
         url_top = 'https://twitter.com/i/api/graphql/2GIWTr7XwadIixZDtyXd4A/UserTweets?variables={"userId":"' + _user_info.rest_id + '","count":20,'
         url_bottom = '"includePromotedContent":false,"withQuickPromoteEligibilityTweetFields":true,"withVoice":true,"withV2Timeline":true}&features={"rweb_lists_timeline_redesign_enabled":true,"responsive_web_graphql_exclude_directive_enabled":true,"verified_phone_label_enabled":false,"creator_subscriptions_tweet_preview_api_enabled":true,"responsive_web_graphql_timeline_navigation_enabled":true,"responsive_web_graphql_skip_user_profile_image_extensions_enabled":false,"tweetypie_unmention_optimization_enabled":true,"responsive_web_edit_tweet_api_enabled":true,"graphql_is_translatable_rweb_tweet_is_translatable_enabled":true,"view_counts_everywhere_api_enabled":true,"longform_notetweets_consumption_enabled":true,"responsive_web_twitter_article_tweet_consumption_enabled":false,"tweet_awards_web_tipping_enabled":false,"freedom_of_speech_not_reach_fetch_enabled":true,"standardized_nudges_misinfo":true,"tweet_with_visibility_results_prefer_gql_limited_actions_policy_enabled":true,"longform_notetweets_rich_text_read_enabled":true,"longform_notetweets_inline_media_enabled":true,"responsive_web_media_download_video_enabled":false,"responsive_web_enhance_cards_enabled":false}&fieldToggles={"withAuxiliaryUserLabels":false,"withArticleRichContentState":false}'
-    else:       #不包含转推则调用[UserMedia]的API(返回条数貌似无上限/改count)
+    else:       #不包含转推则调用[UserMedia]的API(返回条数貌似无上限/改count) ##2023-12-11#此模式API返回值变动
         url_top = 'https://twitter.com/i/api/graphql/Le6KlbilFmSu-5VltFND-Q/UserMedia?variables={"userId":"' + _user_info.rest_id + '","count":500,'
         url_bottom = '"includePromotedContent":false,"withClientEventToken":false,"withBirdwatchNotes":false,"withVoice":true,"withV2Timeline":true}&features={"responsive_web_graphql_exclude_directive_enabled":true,"verified_phone_label_enabled":false,"creator_subscriptions_tweet_preview_api_enabled":true,"responsive_web_graphql_timeline_navigation_enabled":true,"responsive_web_graphql_skip_user_profile_image_extensions_enabled":false,"tweetypie_unmention_optimization_enabled":true,"responsive_web_edit_tweet_api_enabled":true,"graphql_is_translatable_rweb_tweet_is_translatable_enabled":true,"view_counts_everywhere_api_enabled":true,"longform_notetweets_consumption_enabled":true,"responsive_web_twitter_article_tweet_consumption_enabled":false,"tweet_awards_web_tipping_enabled":false,"freedom_of_speech_not_reach_fetch_enabled":true,"standardized_nudges_misinfo":true,"tweet_with_visibility_results_prefer_gql_limited_actions_policy_enabled":true,"longform_notetweets_rich_text_read_enabled":true,"longform_notetweets_inline_media_enabled":true,"responsive_web_media_download_video_enabled":false,"responsive_web_enhance_cards_enabled":false}'
 
@@ -197,19 +201,36 @@ def get_download_url(_user_info):
         response = httpx.get(url, headers=_headers, proxies=proxies).text
         request_count += 1
         raw_data = json.loads(response)
-        raw_data = raw_data['data']['user']['result']['timeline_v2']['timeline']['instructions'][-1]['entries']
-        if 'cursor-top' in raw_data[0]['entryId']:      #所有推文已全部下载完成
+        if has_retweet:
+            raw_data = raw_data['data']['user']['result']['timeline_v2']['timeline']['instructions'][-1]['entries']
+        else:   #usermedia模式
+            raw_data = raw_data['data']['user']['result']['timeline_v2']['timeline']['instructions']
+        if has_retweet and 'cursor-top' in raw_data[0]['entryId']:      #所有推文已全部下载完成
+            return False
+        if not has_retweet and len(raw_data)==1 and len(raw_data[-1]['entries'])==2:    #usermedia新模式，作用同上
             return False
         
+        if not has_retweet:     #usermedia模式下的下一页请求编号
+            for i in raw_data[-1]['entries']:
+                if 'top' in i['entryId']:
+                    _user_info.cursor = i['content']['value']
+            # _user_info.cursor = raw_data[-1]['entries'][0]['content']['value']
+        
         if start_label:     #判断是否超出时间范围
+            if not has_retweet:
+                if _user_info.count == 0:   #第一页的返回值需特殊处理
+                    raw_data = raw_data[-1]['entries'][0]['content']['items']
+                else:
+                    raw_data = raw_data[0]['moduleItems']
             photo_lst = get_url_from_content(raw_data)
         else:
             return False
         
         if not photo_lst:
             photo_lst.append(True)
-    except Exception:
+    except Exception as e:
         print('获取推文信息错误')
+        print(e)
         print(response)
         return False
     return photo_lst

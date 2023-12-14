@@ -207,12 +207,10 @@ def get_download_url(_user_info):
             raw_data = raw_data['data']['user']['result']['timeline_v2']['timeline']['instructions']
         if has_retweet and 'cursor-top' in raw_data[0]['entryId']:      #所有推文已全部下载完成
             return False
-        if not has_retweet and len(raw_data)==1 and len(raw_data[-1]['entries'])==2:    #usermedia新模式，作用同上
-            return False
         
         if not has_retweet:     #usermedia模式下的下一页请求编号
             for i in raw_data[-1]['entries']:
-                if 'top' in i['entryId']:
+                if 'bottom' in i['entryId']:
                     _user_info.cursor = i['content']['value']
             # _user_info.cursor = raw_data[-1]['entries'][0]['content']['value']
         
@@ -221,7 +219,11 @@ def get_download_url(_user_info):
                 if _user_info.count == 0:   #第一页的返回值需特殊处理
                     raw_data = raw_data[-1]['entries'][0]['content']['items']
                 else:
-                    raw_data = raw_data[0]['moduleItems']
+                    if 'moduleItems' not in raw_data[0]:    #usermedia新模式，所有推文已全部下载完成
+                        print(raw_data)
+                        return False
+                    else:
+                        raw_data = raw_data[0]['moduleItems']
             photo_lst = get_url_from_content(raw_data)
         else:
             return False

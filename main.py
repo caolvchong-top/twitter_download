@@ -220,7 +220,6 @@ def get_download_url(_user_info):
                     raw_data = raw_data[-1]['entries'][0]['content']['items']
                 else:
                     if 'moduleItems' not in raw_data[0]:    #usermedia新模式，所有推文已全部下载完成
-                        print(raw_data)
                         return False
                     else:
                         raw_data = raw_data[0]['moduleItems']

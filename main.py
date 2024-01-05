@@ -32,11 +32,13 @@ def time_comparison(now, start, end):
         start_label = False
     return [start_down, start_label]
     
-
+max_concurrent_requests = 8     #最大并发数量，默认为8，对自己网络有自信的可以调高; 遇到多次下载失败时适当降低
+First_Page = True       #首页提取内容时特殊处理
 
 #读取配置
 log_output = False
 has_retweet = False
+has_highlights = False
 has_video = False
 csv_file = None
 
@@ -51,6 +53,9 @@ with open('settings.json', 'r', encoding='utf8') as f:
     settings['save_path'] += os.sep
     if settings['has_retweet']:
         has_retweet = True
+    if settings['high_lights']:
+        has_highlights = True
+        has_retweet = False
     if settings['time_range']:
         time_range = True
         start_time,end_time = settings['time_range'].split(':')
@@ -128,7 +133,7 @@ def get_download_url(_user_info):
     def get_url_from_content(content):
         global start_label
         _photo_lst = []
-        if has_retweet:
+        if has_retweet or has_highlights:
             x_label = 'content'
         else:
             x_label = 'item'
@@ -179,13 +184,16 @@ def get_download_url(_user_info):
 
             except Exception as e:
                 continue
-            if 'cursor-bottom' in i['entryId']:     #更新下一页的请求编号(含转推模式专用)
+            if 'cursor-bottom' in i['entryId']:     #更新下一页的请求编号(含转推模式&亮点模式)
                 _user_info.cursor = i['content']['value']
 
         return _photo_lst
 
     print(f'已下载图片/视频:{_user_info.count}')
-    if has_retweet:     #包含转推调用[UserTweets]的API(调用一次上限返回20条)
+    if has_highlights: ##2024-01-05 #适配[亮点]标签
+        url_top = 'https://twitter.com/i/api/graphql/w9-i9VNm_92GYFaiyGT1NA/UserHighlightsTweets?variables={"userId":"' + _user_info.rest_id + '","count":20,'
+        url_bottom = '"includePromotedContent":true,"withVoice":true}&features={"responsive_web_graphql_exclude_directive_enabled":true,"verified_phone_label_enabled":false,"creator_subscriptions_tweet_preview_api_enabled":true,"responsive_web_graphql_timeline_navigation_enabled":true,"responsive_web_graphql_skip_user_profile_image_extensions_enabled":false,"c9s_tweet_anatomy_moderator_badge_enabled":true,"tweetypie_unmention_optimization_enabled":true,"responsive_web_edit_tweet_api_enabled":true,"graphql_is_translatable_rweb_tweet_is_translatable_enabled":true,"view_counts_everywhere_api_enabled":true,"longform_notetweets_consumption_enabled":true,"responsive_web_twitter_article_tweet_consumption_enabled":false,"tweet_awards_web_tipping_enabled":false,"freedom_of_speech_not_reach_fetch_enabled":true,"standardized_nudges_misinfo":true,"tweet_with_visibility_results_prefer_gql_limited_actions_policy_enabled":true,"rweb_video_timestamps_enabled":true,"longform_notetweets_rich_text_read_enabled":true,"longform_notetweets_inline_media_enabled":true,"responsive_web_media_download_video_enabled":false,"responsive_web_enhance_cards_enabled":false}'
+    elif has_retweet:     #包含转推调用[UserTweets]的API(调用一次上限返回20条)
         url_top = 'https://twitter.com/i/api/graphql/2GIWTr7XwadIixZDtyXd4A/UserTweets?variables={"userId":"' + _user_info.rest_id + '","count":20,'
         url_bottom = '"includePromotedContent":false,"withQuickPromoteEligibilityTweetFields":true,"withVoice":true,"withV2Timeline":true}&features={"rweb_lists_timeline_redesign_enabled":true,"responsive_web_graphql_exclude_directive_enabled":true,"verified_phone_label_enabled":false,"creator_subscriptions_tweet_preview_api_enabled":true,"responsive_web_graphql_timeline_navigation_enabled":true,"responsive_web_graphql_skip_user_profile_image_extensions_enabled":false,"tweetypie_unmention_optimization_enabled":true,"responsive_web_edit_tweet_api_enabled":true,"graphql_is_translatable_rweb_tweet_is_translatable_enabled":true,"view_counts_everywhere_api_enabled":true,"longform_notetweets_consumption_enabled":true,"responsive_web_twitter_article_tweet_consumption_enabled":false,"tweet_awards_web_tipping_enabled":false,"freedom_of_speech_not_reach_fetch_enabled":true,"standardized_nudges_misinfo":true,"tweet_with_visibility_results_prefer_gql_limited_actions_policy_enabled":true,"longform_notetweets_rich_text_read_enabled":true,"longform_notetweets_inline_media_enabled":true,"responsive_web_media_download_video_enabled":false,"responsive_web_enhance_cards_enabled":false}&fieldToggles={"withAuxiliaryUserLabels":false,"withArticleRichContentState":false}'
     else:       #不包含转推则调用[UserMedia]的API(返回条数貌似无上限/改count) ##2023-12-11#此模式API返回值变动
@@ -201,23 +209,27 @@ def get_download_url(_user_info):
         response = httpx.get(url, headers=_headers, proxies=proxies).text
         request_count += 1
         raw_data = json.loads(response)
-        if has_retweet:
+        if has_highlights:  #亮点模式
+            raw_data = raw_data['data']['user']['result']['timeline']['timeline']['instructions'][-1]['entries']
+        elif has_retweet:
             raw_data = raw_data['data']['user']['result']['timeline_v2']['timeline']['instructions'][-1]['entries']
         else:   #usermedia模式
             raw_data = raw_data['data']['user']['result']['timeline_v2']['timeline']['instructions']
-        if has_retweet and 'cursor-top' in raw_data[0]['entryId']:      #所有推文已全部下载完成
+        if (has_retweet or has_highlights) and 'cursor-top' in raw_data[0]['entryId']:      #含转推模式 所有推文已全部下载完成
             return False
         
-        if not has_retweet:     #usermedia模式下的下一页请求编号
+        if not has_retweet and not has_highlights:     #usermedia模式下的下一页请求编号
             for i in raw_data[-1]['entries']:
                 if 'bottom' in i['entryId']:
                     _user_info.cursor = i['content']['value']
             # _user_info.cursor = raw_data[-1]['entries'][0]['content']['value']
         
         if start_label:     #判断是否超出时间范围
-            if not has_retweet:
-                if _user_info.count == 0:   #第一页的返回值需特殊处理
+            if not has_retweet and not has_highlights:
+                global First_Page
+                if First_Page:   #第一页的返回值需特殊处理
                     raw_data = raw_data[-1]['entries'][0]['content']['items']
+                    First_Page = False
                 else:
                     if 'moduleItems' not in raw_data[0]:    #usermedia新模式，所有推文已全部下载完成
                         return False
@@ -251,10 +263,12 @@ def download_control(_user_info):
             count = 0
             while True:
                 try:
-                    async with httpx.AsyncClient(proxies=proxies) as client:
-                        global down_count
-                        response = await client.get(url, timeout=(3.05, 16))        #如果出现第五次或以上的下载失败,且确认不是网络问题,可以适当调高超时时间(默认为16s)
-                        down_count += 1
+                    semaphore = asyncio.Semaphore(max_concurrent_requests)    #最大并发数量，默认为8，对自己网络有自信的可以调高
+                    async with semaphore:
+                        async with httpx.AsyncClient(proxies=proxies) as client:
+                            global down_count
+                            response = await client.get(url, timeout=(3.05, 16))        #如果出现第五次或以上的下载失败,且确认不是网络问题,可以适当降低最大并发数量
+                            down_count += 1
                     with open(_file_name,'wb') as f:
                         f.write(response.content)
 

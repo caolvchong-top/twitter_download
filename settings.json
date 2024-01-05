@@ -6,10 +6,13 @@
     "user_lst_info": "填入要下载的用户名(@后面的字符),支持多用户下载,用户名字间逗号(英文逗号)隔开",
 
     "cookie": "",
-    "cookie_info": "填入完整 cookie (须含auth_token与ct0字段),会失效,记得更新 //重要:cookie内的双引号记得手动加上  反斜杠  转义",
+    "cookie_info": "填入完整 cookie (须含auth_token与ct0字段),会失效,记得更新 //重要:cookie中若存在双引号记得手动加上  反斜杠  转义",
 
     "has_retweet": false,
     "has_retweet_info": "是否包含转推 (包含转推会消耗大量API调用次数)",
+
+    "high_lights": false,
+    "high_lights_info": "推特的 [Highlights]亮点 标签，与 [媒体][转推] 不共存，即仅下载亮点标签下的内容",
 
     "time_range": "1990-01-01:2030-01-01",
     "time_range_info": "时间范围限制,格式如 1990-01-01:2030-01-01 ,不填默认无限制",

@@ -18,7 +18,7 @@ elif 不包含:
 
 # Change Log 
 * **2024-01-05**
-  * 适配Twieer新标签页 **[亮点(HighLights)]** (如有问题请发issue)
+  * 适配Twieer新标签页 [ **亮点(HighLights)** ] (如有问题请发issue)
 * **2023-12-12**
   * 适配Twitter新API
 * **2023-10-12**
@@ -68,12 +68,16 @@ python3 main.py
 ![20230720134253](https://github.com/caolvchong-top/twitter_download/assets/57820488/6e5ba42f-2dc4-4fa1-8cf6-152246378756)
 
 ![20230720135731](https://github.com/caolvchong-top/twitter_download/assets/57820488/8c167bf1-a497-4466-b81c-3f9760ac56e8)
+ 
+**图片下载效果**
 
-![20230720135833](https://github.com/caolvchong-top/twitter_download/assets/57820488/6361f411-0d46-4371-9de8-425372706077)
+![test1](https://github.com/caolvchong-top/twitter_download/assets/57820488/736f7554-612b-4bec-8baf-4a5ab45c6e04)
+
 
 **视频下载效果**
 
-![视频下载2](https://github.com/caolvchong-top/twitter_download/assets/57820488/089ee00c-6530-452b-9b0c-1cbae9459dd2) 
+![test2](https://github.com/caolvchong-top/twitter_download/assets/57820488/6f732042-6f96-4e7a-bd16-e7d08a46a90e)
+
 
 
 **生成的CSV文件**

@@ -40,7 +40,8 @@ elif 不包含:
 ``` 
 git clone https://github.com/caolvchong-top/twitter_download.git 
 cd twitter_download 
-pip3 install httpx
+pip3 install httpx==0.23.0
+#非0.23版本可能会出现不知名问题
 ``` 
 **运行** : 
 ``` 

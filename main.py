@@ -8,6 +8,8 @@ import json
 from user_info import User_info
 from csv_gen import csv_gen
 
+max_concurrent_requests = 8     #最大并发数量，默认为8，对自己网络有自信的可以调高; 遇到多次下载失败时适当降低
+
 def del_special_char(string):
     string = re.sub(u'[^\u4e00-\u9fa5\u0030-\u0039\u0041-\u005a\u0061-\u007a\u3040-\u31FF\.]', '', string)
     return string
@@ -32,8 +34,6 @@ def time_comparison(now, start, end):
         start_label = False
     return [start_down, start_label]
     
-max_concurrent_requests = 8     #最大并发数量，默认为8，对自己网络有自信的可以调高; 遇到多次下载失败时适当降低
-First_Page = True       #首页提取内容时特殊处理
 
 #读取配置
 log_output = False
@@ -45,6 +45,7 @@ csv_file = None
 start_time_stamp = 655028357000   #1990-10-04
 end_time_stamp = 2548484357000    #2050-10-04
 start_label = True
+First_Page = True       #首页提取内容时特殊处理
 
 with open('settings.json', 'r', encoding='utf8') as f:
     settings = json.load(f)
@@ -144,9 +145,11 @@ def get_download_url(_user_info):
                 if 'tweet' in i['entryId']:     #正常推文
                     if 'tweet' in i[x_label]['itemContent']['tweet_results']['result']:
                         a = i[x_label]['itemContent']['tweet_results']['result']['tweet']['legacy']       #适配限制回复账号
+                        frr = [a['favorite_count'], a['retweet_count'], a['reply_count']]
                         tweet_msecs = int(i[x_label]['itemContent']['tweet_results']['result']['tweet']['edit_control']['editable_until_msecs'])
                     else:
                         a = i[x_label]['itemContent']['tweet_results']['result']['legacy']
+                        frr = [a['favorite_count'], a['retweet_count'], a['reply_count']]
                         tweet_msecs = int(i[x_label]['itemContent']['tweet_results']['result']['edit_control']['editable_until_msecs'])
                     timestr = stamp2time(tweet_msecs)
 
@@ -156,11 +159,11 @@ def get_download_url(_user_info):
                     _result = time_comparison(tweet_msecs, start_time_stamp, end_time_stamp)
                     if _result[0]:  #符合时间限制
                         if 'extended_entities' in a and 'retweeted_status_result' not in a:
-                            _photo_lst += [(get_heighest_video_quality(_media['video_info']['variants']), f'{timestr}-vid', [tweet_msecs, _user_info.name, f'@{_user_info.screen_name}', _media['expanded_url'], 'Video', get_heighest_video_quality(_media['video_info']['variants']), '', a['full_text']]) if 'video_info' in _media and has_video else (_media['media_url_https'], f'{timestr}-img', [tweet_msecs, _user_info.name, f'@{_user_info.screen_name}', _media['expanded_url'], 'Image', _media['media_url_https'], '', a['full_text']]) for _media in a['extended_entities']['media']]
+                            _photo_lst += [(get_heighest_video_quality(_media['video_info']['variants']), f'{timestr}-vid', [tweet_msecs, _user_info.name, f'@{_user_info.screen_name}', _media['expanded_url'], 'Video', get_heighest_video_quality(_media['video_info']['variants']), '', a['full_text']] + frr) if 'video_info' in _media and has_video else (_media['media_url_https'], f'{timestr}-img', [tweet_msecs, _user_info.name, f'@{_user_info.screen_name}', _media['expanded_url'], 'Image', _media['media_url_https'], '', a['full_text']] + frr) for _media in a['extended_entities']['media']]
 
                         
                         elif 'retweeted_status_result' in a and 'extended_entities' in a['retweeted_status_result']['result']['legacy']:    #判断是否为转推,以及是否获取转推
-                            _photo_lst += [(get_heighest_video_quality(_media['video_info']['variants']), f'retweet-{timestr}-vid', [tweet_msecs, a['retweeted_status_result']['result']['core']['user_results']['result']['legacy']['name'], f"@{a['retweeted_status_result']['result']['core']['user_results']['result']['legacy']['screen_name']}", _media['expanded_url'], 'Video', get_heighest_video_quality(_media['video_info']['variants']), '', a['retweeted_status_result']['result']['legacy']['full_text']]) if 'video_info' in _media and has_video else (_media['media_url_https'], f'retweet-{timestr}-img', [tweet_msecs, a['retweeted_status_result']['result']['core']['user_results']['result']['legacy']['name'], f"@{a['retweeted_status_result']['result']['core']['user_results']['result']['legacy']['screen_name']}", _media['expanded_url'], 'Image', _media['media_url_https'], '', a['retweeted_status_result']['result']['legacy']['full_text']]) for _media in a['retweeted_status_result']['result']['legacy']['extended_entities']['media']]
+                            _photo_lst += [(get_heighest_video_quality(_media['video_info']['variants']), f'retweet-{timestr}-vid', [tweet_msecs, a['retweeted_status_result']['result']['core']['user_results']['result']['legacy']['name'], f"@{a['retweeted_status_result']['result']['core']['user_results']['result']['legacy']['screen_name']}", _media['expanded_url'], 'Video', get_heighest_video_quality(_media['video_info']['variants']), '', a['retweeted_status_result']['result']['legacy']['full_text']] + frr) if 'video_info' in _media and has_video else (_media['media_url_https'], f'retweet-{timestr}-img', [tweet_msecs, a['retweeted_status_result']['result']['core']['user_results']['result']['legacy']['name'], f"@{a['retweeted_status_result']['result']['core']['user_results']['result']['legacy']['screen_name']}", _media['expanded_url'], 'Image', _media['media_url_https'], '', a['retweeted_status_result']['result']['legacy']['full_text']] + frr) for _media in a['retweeted_status_result']['result']['legacy']['extended_entities']['media']]
                     elif not _result[1]:    #已超出目标时间范围
                         start_label = False
                         break
@@ -168,16 +171,18 @@ def get_download_url(_user_info):
                 elif 'profile-conversation' in i['entryId']:    #回复的推文(对话线索)
                     if 'tweet' in i[x_label]['items'][0]['item']['itemContent']['tweet_results']['result']:
                         a = i[x_label]['items'][0]['item']['itemContent']['tweet_results']['result']['tweet']['legacy']
+                        frr = [a['favorite_count'], a['retweet_count'], a['reply_count']]
                         tweet_msecs = int(i[x_label]['items'][0]['item']['itemContent']['tweet_results']['result']['tweet']['edit_control']['editable_until_msecs'])
                     else:
                         a = i[x_label]['items'][0]['item']['itemContent']['tweet_results']['result']['legacy']
+                        frr = [a['favorite_count'], a['retweet_count'], a['reply_count']]
                         tweet_msecs = int(i[x_label]['items'][0]['item']['itemContent']['tweet_results']['result']['edit_control']['editable_until_msecs'])
                     timestr = stamp2time(tweet_msecs)
 
                     _result = time_comparison(tweet_msecs, start_time_stamp, end_time_stamp)
                     if _result[0]:  #符合时间限制
                         if 'extended_entities' in a:
-                            _photo_lst += [(get_heighest_video_quality(_media['video_info']['variants']), f'{timestr}-vid', [tweet_msecs, _user_info.name, f'@{_user_info.screen_name}', _media['expanded_url'], 'Video', get_heighest_video_quality(_media['video_info']['variants']), '', a['full_text']]) if 'video_info' in _media and has_video else (_media['media_url_https'], f'{timestr}-img', [tweet_msecs, _user_info.name, f'@{_user_info.screen_name}', _media['expanded_url'], 'Image', _media['media_url_https'], '', a['full_text']]) for _media in a['extended_entities']['media']]
+                            _photo_lst += [(get_heighest_video_quality(_media['video_info']['variants']), f'{timestr}-vid', [tweet_msecs, _user_info.name, f'@{_user_info.screen_name}', _media['expanded_url'], 'Video', get_heighest_video_quality(_media['video_info']['variants']), '', a['full_text']] + frr) if 'video_info' in _media and has_video else (_media['media_url_https'], f'{timestr}-img', [tweet_msecs, _user_info.name, f'@{_user_info.screen_name}', _media['expanded_url'], 'Image', _media['media_url_https'], '', a['full_text']] + frr) for _media in a['extended_entities']['media']]
                     elif not _result[1]:    #已超出目标时间范围
                         start_label = False
                         break
@@ -272,7 +277,7 @@ def download_control(_user_info):
                     with open(_file_name,'wb') as f:
                         f.write(response.content)
 
-                    csv_info[-2] = os.path.split(_file_name)[1]
+                    csv_info[-5] = os.path.split(_file_name)[1]
                     csv_file.data_input(csv_info)
 
                     if log_output:
@@ -281,7 +286,7 @@ def download_control(_user_info):
                     break
                 except Exception as e:
                     count += 1
-                    print(f'{_file_name}=====>第{count}次下载失败,正在重试')
+                    print(f'{_file_name}=====>第{count}次下载失败,正在重试(多次失败时请降低main.py第11行)')
                     print(url)
 
         while True:
@@ -322,4 +327,5 @@ if __name__=='__main__':
     for i in settings['user_lst'].split(','):
         main(User_info(i))
         start_label = True
+        First_Page = True
     print(f'共耗时:{time.time()-_start}秒\n共调用{request_count}次API\n共下载{down_count}份图片/视频')

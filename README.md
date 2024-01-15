@@ -17,8 +17,10 @@ elif 不包含:
 ```
 
 # Change Log 
+* **2024-01-16**
+  * 适配 [ **喜欢(Likes)** ] 标签页 (如有问题请发issue)
 * **2024-01-10**
-  * 新增统计数据 **[Favorite, Retweet, Reply]** (如有问题请发issue)
+  * 新增统计数据 [ **Favorite, Retweet, Reply** ]
 * **2024-01-05**
   * 适配Twieer新标签页 [ **亮点(HighLights)** ]
 * **2023-12-12**

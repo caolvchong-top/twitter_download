@@ -5,8 +5,11 @@
     "user_lst": "lilmonix3,matchach",
     "user_lst_info": "填入要下载的用户名(@后面的字符),支持多用户下载,用户名字间逗号(英文逗号)隔开",
 
-    "cookie": "",
-    "cookie_info": "填入完整 cookie (须含auth_token与ct0字段),会失效,记得更新 //重要:cookie中若存在双引号记得手动加上  反斜杠  转义",
+    "cookie": "auth_token=xxxxxxxxxxx; ct0=xxxxxxxxxxx;",
+    "cookie_info": "填入 cookie (auth_token与ct0字段) //重要:替换掉其中的x即可, 注意不要删掉分号",
+
+
+    "emmmmmm": "以下选项三选一, 一般全false, 即 下载目标用户自己发的图片",
 
     "has_retweet": false,
     "has_retweet_info": "是否包含转推 (包含转推会消耗大量API调用次数)",
@@ -16,6 +19,9 @@
 
     "likes": false,
     "likes_info": "用户界面 [Likes] 标签页，即下载指定用户点过赞的推文，与 [媒体][转推][亮点] 不共存, 不支持时间范围限制默认全部下载(点赞时间无法获取), 不生成csv数据统计",
+
+    "_emmmmmm_": "---------------",
+    
 
     "time_range": "1990-01-01:2030-01-01",
     "time_range_info": "时间范围限制,格式如 1990-01-01:2030-01-01 ,不填默认无限制",

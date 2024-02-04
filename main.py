@@ -42,6 +42,7 @@ has_highlights = False
 has_likes = False
 has_video = False
 csv_file = None
+async_down = True
 
 start_time_stamp = 655028357000   #1990-10-04
 end_time_stamp = 2548484357000    #2050-10-04
@@ -72,6 +73,8 @@ with open('settings.json', 'r', encoding='utf8') as f:
         has_video = True
     if settings['log_output']:
         log_output = True
+    if not settings['async_down']:
+        async_down = False
 ###### proxy ######
     if settings['proxy']:
         proxies = settings['proxy']
@@ -297,7 +300,7 @@ def download_control(_user_info):
                     break
                 except Exception as e:
                     count += 1
-                    print(f'{_file_name}=====>第{count}次下载失败,正在重试(多次失败时请降低main.py第11行)')
+                    print(f'{_file_name}=====>第{count}次下载失败,正在重试(多次失败时请降低main.py第11行-异步模式)')
                     print(url)
 
         while True:
@@ -306,7 +309,11 @@ def download_control(_user_info):
                 break
             elif photo_lst[0] == True:
                 continue
-            await asyncio.gather(*[asyncio.create_task(down_save(url[0], url[1], url[2], order)) for order,url in enumerate(photo_lst)])
+            if async_down:
+                await asyncio.gather(*[asyncio.create_task(down_save(url[0], url[1], url[2], order)) for order,url in enumerate(photo_lst)])
+            else:
+                for order,url in enumerate(photo_lst):
+                    await down_save(url[0], url[1], url[2], order)
             _user_info.count += len(photo_lst)      #更新计数
 
     asyncio.run(_main())

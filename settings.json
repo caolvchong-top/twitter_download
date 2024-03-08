@@ -26,6 +26,9 @@
     "time_range": "1990-01-01:2030-01-01",
     "time_range_info": "时间范围限制,格式如 1990-01-01:2030-01-01 ,不填默认无限制",
 
+    "down_log": false,
+    "down_log_info": "开启后将记录已下载的内容,避免重复下载浪费带宽; 注意:如需重新下载已下载内容,需要关闭此选项或删除目录下的 cache_data.log 文件",
+
     "img_format": "png",
     "img_format_info": "下载图片/视频的质量(png为高质量,jpg为标准质量)",
 

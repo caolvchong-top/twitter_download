@@ -7,6 +7,7 @@ import os
 import json
 from user_info import User_info
 from csv_gen import csv_gen
+from cache_gen import cache_gen
 
 max_concurrent_requests = 8     #最大并发数量，默认为8，对自己网络有自信的可以调高; 遇到多次下载失败时适当降低
 
@@ -42,6 +43,8 @@ has_highlights = False
 has_likes = False
 has_video = False
 csv_file = None
+cache_data = None
+down_log = False
 async_down = True
 
 start_time_stamp = 655028357000   #1990-10-04
@@ -63,6 +66,8 @@ with open('settings.json', 'r', encoding='utf8') as f:
         time_range = True
         start_time,end_time = settings['time_range'].split(':')
         start_time_stamp,end_time_stamp = time2stamp(start_time),time2stamp(end_time)
+    if settings['down_log']:
+        down_log = True
     if settings['likes']:   #likes的逻辑和retweet大致相同
         has_retweet = True
         has_likes = True
@@ -310,7 +315,7 @@ def download_control(_user_info):
             elif photo_lst[0] == True:
                 continue
             if async_down:
-                await asyncio.gather(*[asyncio.create_task(down_save(url[0], url[1], url[2], order)) for order,url in enumerate(photo_lst)])
+                await asyncio.gather(*[asyncio.create_task(down_save(url[0], url[1], url[2], order)) for order,url in enumerate(photo_lst) if cache_data.is_present(url[0])])
             else:
                 for order,url in enumerate(photo_lst):
                     await down_save(url[0], url[1], url[2], order)
@@ -336,10 +341,15 @@ def main(_user_info: object):
         global csv_file
         csv_file = csv_gen(_user_info.save_path, _user_info.name, _user_info.screen_name, settings['time_range'])
 
+    if down_log:
+        global cache_data
+        cache_data = cache_gen(_user_info.save_path)
+
     download_control(_user_info)
 
     if not has_likes:
         csv_file.csv_close()
+    del cache_data
     print(f'{_user_info.name}下载完成\n\n')
 
 if __name__=='__main__':

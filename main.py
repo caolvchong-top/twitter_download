@@ -46,6 +46,7 @@ csv_file = None
 cache_data = None
 down_log = False
 async_down = True
+autoSync = False
 
 start_time_stamp = 655028357000   #1990-10-04
 end_time_stamp = 2548484357000    #2050-10-04
@@ -66,6 +67,8 @@ with open('settings.json', 'r', encoding='utf8') as f:
         time_range = True
         start_time,end_time = settings['time_range'].split(':')
         start_time_stamp,end_time_stamp = time2stamp(start_time),time2stamp(end_time)
+    if settings['autoSync']:
+        autoSync = True
     if settings['down_log']:
         down_log = True
     if settings['likes']:   #likes的逻辑和retweet大致相同
@@ -315,7 +318,10 @@ def download_control(_user_info):
             elif photo_lst[0] == True:
                 continue
             if async_down:
-                await asyncio.gather(*[asyncio.create_task(down_save(url[0], url[1], url[2], order)) for order,url in enumerate(photo_lst) if cache_data.is_present(url[0])])
+                if down_log:
+                    await asyncio.gather(*[asyncio.create_task(down_save(url[0], url[1], url[2], order)) for order,url in enumerate(photo_lst) if cache_data.is_present(url[0])])
+                else:
+                    await asyncio.gather(*[asyncio.create_task(down_save(url[0], url[1], url[2], order)) for order,url in enumerate(photo_lst)])
             else:
                 for order,url in enumerate(photo_lst):
                     await down_save(url[0], url[1], url[2], order)
@@ -344,6 +350,18 @@ def main(_user_info: object):
     if down_log:
         global cache_data
         cache_data = cache_gen(_user_info.save_path)
+
+    if autoSync:
+        files = sorted(os.listdir(_user_info.save_path))
+        if len(files) > 0:
+            global start_time_stamp
+            for i in files[::-1]:
+                if "-img_" in i:
+                    start_time_stamp = time2stamp(i.split('-img_')[0])
+                    break
+                elif "-vid_" in i:
+                    start_time_stamp = time2stamp(i.split('-vid_')[0])
+                    break
 
     download_control(_user_info)
 

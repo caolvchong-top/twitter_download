@@ -367,7 +367,8 @@ def main(_user_info: object):
 
     if not has_likes:
         csv_file.csv_close()
-    del cache_data
+    if down_log:
+        del cache_data
     print(f'{_user_info.name}下载完成\n\n')
 
 if __name__=='__main__':

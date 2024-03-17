@@ -355,12 +355,13 @@ def main(_user_info: object):
         files = sorted(os.listdir(_user_info.save_path))
         if len(files) > 0:
             global start_time_stamp
+            re_rule = '\d{4}-\d{2}-\d{2}'
             for i in files[::-1]:
                 if "-img_" in i:
-                    start_time_stamp = time2stamp(i.split('-img_')[0])
+                    start_time_stamp = time2stamp(re.findall(re_rule, i)[0])
                     break
                 elif "-vid_" in i:
-                    start_time_stamp = time2stamp(i.split('-vid_')[0])
+                    start_time_stamp = time2stamp(re.findall(re_rule, i)[0])
                     break
 
     download_control(_user_info)

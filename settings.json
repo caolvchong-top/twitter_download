@@ -3,7 +3,7 @@
     "save_path_info": "就算是windows路径也请用 '/' ,而不是反斜杠(可以留空)",
 
     "user_lst": "lilmonix3,matchach",
-    "user_lst_info": "填入要下载的用户名(@后面的字符),支持多用户下载,用户名字间逗号(英文逗号)隔开",
+    "user_lst_info": "填入要下载的用户名(@后面的字符),支持多用户下载,用户名字间逗号(英文逗号,不要有空格)隔开",
 
     "cookie": "auth_token=xxxxxxxxxxx; ct0=xxxxxxxxxxx;",
     "cookie_info": "填入 cookie (auth_token与ct0字段) //重要:替换掉其中的x即可, 注意不要删掉分号",

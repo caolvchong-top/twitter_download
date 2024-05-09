@@ -289,7 +289,6 @@ def download_control(_user_info):
             count = 0
             while True:
                 try:
-                    semaphore = asyncio.Semaphore(max_concurrent_requests)    #最大并发数量，默认为8，对自己网络有自信的可以调高
                     async with semaphore:
                         async with httpx.AsyncClient(proxies=proxies) as client:
                             global down_count
@@ -318,6 +317,7 @@ def download_control(_user_info):
             elif photo_lst[0] == True:
                 continue
             if async_down:
+                semaphore = asyncio.Semaphore(max_concurrent_requests)    #最大并发数量，默认为8，对自己网络有自信的可以调高
                 if down_log:
                     await asyncio.gather(*[asyncio.create_task(down_save(url[0], url[1], url[2], order)) for order,url in enumerate(photo_lst) if cache_data.is_present(url[0])])
                 else:

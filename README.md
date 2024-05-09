@@ -17,6 +17,11 @@ elif 不包含:
 ```
 
 # Change Log 
+* **2024-05-10**
+  * 支持按Tag获取-请直接配置tag_down.py文件并运行（临时功能）
+  
+    // 保存格式 (下方有预览)：. / {#Tag} / {datetime} \_ {@username} \_ { md5( timestamp + username )[:4] } . { png/mp4 }
+
 * **2024-03-09**
   * 支持记录已下载内容,避免重复下载 (如有问题请发issue)
   * 支持自动同步最新内容
@@ -77,6 +82,11 @@ python3 main.py
 
 ![20230720135731](https://github.com/caolvchong-top/twitter_download/assets/57820488/8c167bf1-a497-4466-b81c-3f9760ac56e8)
  
+**按Tag获取(仅媒体文件)** 
+
+![image](https://github.com/caolvchong-top/twitter_download/assets/57820488/aa109e18-5ef1-4d77-902c-658ed1b3ff53)
+
+
 **图片下载效果**
 
 ![test1](https://github.com/caolvchong-top/twitter_download/assets/57820488/736f7554-612b-4bec-8baf-4a5ab45c6e04)

@@ -131,7 +131,7 @@ class tag_down():
             
         for tweet in raw_data_lst:
             tweet = tweet['item']['itemContent']['tweet_results']['result']
-            screen_name = '@' + del_special_char(tweet['core']['user_results']['result']['legacy']['screen_name'])
+            screen_name = '@' + tweet['core']['user_results']['result']['legacy']['screen_name']
             time_stamp = int(tweet['edit_control']['editable_until_msecs'])
             raw_media_lst = tweet['legacy']['extended_entities']['media']
             for _media in raw_media_lst:

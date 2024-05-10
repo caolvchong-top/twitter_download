@@ -33,9 +33,9 @@ def stamp2time(msecs_stamp:int) -> str:
     otherStyleTime = time.strftime("%Y-%m-%d", timeArray)
     return otherStyleTime
 
-def hash_save_token(time_stamp, user_name):
+def hash_save_token(media_url):
     m = hashlib.md5()
-    m.update(f'{time_stamp}{user_name}'.encode('utf-8'))
+    m.update(f'{media_url}'.encode('utf-8'))
     return m.hexdigest()[:4]
 
 
@@ -57,10 +57,10 @@ def download_control(folder_path, photo_lst):
     async def _main():
         async def down_save(url, folder_path, time_stamp, user_name):
             if '.mp4' in url:
-                _file_name = f'{folder_path}{stamp2time(time_stamp)}_{user_name}_{hash_save_token(time_stamp, user_name)}.mp4'
+                _file_name = f'{folder_path}{stamp2time(time_stamp)}_{user_name}_{hash_save_token(url)}.mp4'
             else:
                 try:
-                    _file_name = f'{folder_path}{stamp2time(time_stamp)}_{user_name}_{hash_save_token(time_stamp, user_name)}.png'
+                    _file_name = f'{folder_path}{stamp2time(time_stamp)}_{user_name}_{hash_save_token(url)}.png'
                     url += '?format=png&name=4096x4096'
                 except Exception as e:
                     print(e)

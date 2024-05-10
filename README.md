@@ -18,9 +18,9 @@ elif 不包含:
 
 # Change Log 
 * **2024-05-10**
-  * 支持按Tag获取-请直接配置tag_down.py文件并运行（临时功能）
+  * 支持按Tag获取-**请直接配置tag_down.py文件并运行**（临时功能）
   
-    // 保存格式 (下方有预览)：. / {#Tag} / {datetime} \_ {@username} \_ { md5( timestamp + username )[:4] } . { png/mp4 }
+    // 保存格式 (下方有预览)：. / {#Tag} / {datetime} \_ {@username} \_ { md5( media_url )[:4] } . { png / mp4 }
 
 * **2024-03-09**
   * 支持记录已下载内容,避免重复下载 (如有问题请发issue)

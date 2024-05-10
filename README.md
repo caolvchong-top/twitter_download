@@ -1,8 +1,9 @@
 # 推特图片下载    ⟵(๑¯◡¯๑) 
 推特 图片 & 视频 下载，以用户名为参数，爬取该用户推文中的图片与视频(含gif)
 
-支持排除转推内容 & 多用户爬取 & 时间范围限制 
+支持排除转推内容 & 多用户爬取 & 时间范围限制 & 按Tag获取 & 纯文本获取 
 
+---
 **目前老马加了API的请求次数限制** 
 ``` 
 当程序抛出：Rate limit exceeded 
@@ -17,8 +18,12 @@ elif 不包含:
 ```
 
 # Change Log 
+* **2024-05-11**
+  * 支持获取纯文本推文--**请直接配置text_down.py文件并运行**（临时功能）
+    
+    // (下方有预览) 注意，此功能会大量消耗API次数(参考上方公式)，默认排除转推内容
 * **2024-05-10**
-  * 支持按Tag获取-**请直接配置tag_down.py文件并运行**（临时功能）
+  * 支持按Tag获取--**请直接配置tag_down.py文件并运行**（临时功能）
   
     // 保存格式 (下方有预览)：. / {#Tag} / {datetime} \_ {@username} \_ { md5( media_url )[:4] } . { png / mp4 }
 
@@ -43,7 +48,13 @@ elif 不包含:
       
 * **2023-09-15**
   * 添加 视频下载 功能
-    
+ 
+---
+
+| ![e53923662b627a645fcd2b0b3feadb3b](https://github.com/caolvchong-top/twitter_download/assets/57820488/39da9658-f40f-40d6-8480-9dff850076da) |
+|:--:| 
+| **(๑´ڡ`๑)** | 
+
 
 部署
 --- 
@@ -69,7 +80,7 @@ python3 main.py
 ![settings](https://github.com/caolvchong-top/twitter_download/assets/57820488/9cb4ac26-4e3a-4953-9dfd-8e3d85046b2d)
 
 
-运行截图 
+效果预览
 ---
 ![20230720134231](https://github.com/caolvchong-top/twitter_download/assets/57820488/ee6a1c13-2b0c-47e9-a260-1ac529bec678) 
 
@@ -86,6 +97,11 @@ python3 main.py
 
 ![image](https://github.com/caolvchong-top/twitter_download/assets/57820488/aa109e18-5ef1-4d77-902c-658ed1b3ff53)
 
+**纯文本推文获取(仅文本)** 
+
+![QQ截图20240511032859](https://github.com/caolvchong-top/twitter_download/assets/57820488/0998b6b1-c313-4b1d-a78e-525a666098b2)
+
+
 
 **图片下载效果**
 
@@ -98,7 +114,7 @@ python3 main.py
 
 
 
-**生成的CSV文件**
+**生成的CSV统计**
 
 ![屏幕截图 2023-10-12 223755](https://github.com/caolvchong-top/twitter_download/assets/57820488/b5dfc741-e10f-409a-b298-d56ea236bc5f)
 

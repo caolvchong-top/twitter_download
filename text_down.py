@@ -35,7 +35,7 @@ start_time_stamp,end_time_stamp = time2stamp(start_time),time2stamp(end_time)
 
 class csv_gen():
     def __init__(self, save_path:str, user_name, screen_name, tweet_range) -> None:
-        self.f = open(f'{save_path}/{screen_name}.csv', 'w', encoding='utf-8-sig', newline='')
+        self.f = open(f'{save_path}/{screen_name}-text.csv', 'w', encoding='utf-8-sig', newline='')
         self.writer = csv.writer(self.f)
 
         #初始化

@@ -157,7 +157,15 @@ class text_down():
                     raw_text = tweet['content']['itemContent']['tweet_results']['result']
                     if 'retweeted_status_result' in raw_text['legacy']:       #默认排除转推
                         continue
-                    _time_stamp = int(raw_text['edit_control']['editable_until_msecs'])
+
+                    try:
+                        _time_stamp = int(raw_text['edit_control']['editable_until_msecs'])
+                    except Exception:
+                        if 'edit_control_initial' in raw_text['edit_control']:
+                            _time_stamp = int(raw_text['edit_control']['edit_control_initial']['editable_until_msecs'])
+                        else:
+                            continue
+
                     _results = time_comparison(_time_stamp)
                     if not _results[1]:     #超出时间范围，结束
                         return

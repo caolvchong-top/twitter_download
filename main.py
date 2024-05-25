@@ -17,7 +17,7 @@ def del_special_char(string):
 
 def stamp2time(msecs_stamp:int) -> str:
     timeArray = time.localtime(msecs_stamp/1000)
-    otherStyleTime = time.strftime("%Y-%m-%d", timeArray)
+    otherStyleTime = time.strftime("%Y-%m-%d %H-%M", timeArray)
     return otherStyleTime
 
 def time2stamp(timestr:str) -> int:

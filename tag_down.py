@@ -38,7 +38,7 @@ else:
 
 
 def del_special_char(string):
-    string = re.sub(u'[^#\u4e00-\u9fa5\u0030-\u0039\u0041-\u005a\u0061-\u007a\u3040-\u31FF\.]', '', string)
+    string = re.sub(r'[^#\u4e00-\u9fa5\u0030-\u0039\u0041-\u005a\u0061-\u007a\u3040-\u31FF\.]', '', string)
     return string
 
 def stamp2time(msecs_stamp:int) -> str:

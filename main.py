@@ -164,11 +164,11 @@ def get_download_url(_user_info):
                     if 'tweet' in i[x_label]['itemContent']['tweet_results']['result']:
                         a = i[x_label]['itemContent']['tweet_results']['result']['tweet']['legacy']       #适配限制回复账号
                         frr = [a['favorite_count'], a['retweet_count'], a['reply_count']]
-                        tweet_msecs = int(i[x_label]['itemContent']['tweet_results']['result']['tweet']['edit_control']['editable_until_msecs'])
+                        tweet_msecs = int(i[x_label]['itemContent']['tweet_results']['result']['tweet']['edit_control']['editable_until_msecs']) - 3600000
                     else:
                         a = i[x_label]['itemContent']['tweet_results']['result']['legacy']
                         frr = [a['favorite_count'], a['retweet_count'], a['reply_count']]
-                        tweet_msecs = int(i[x_label]['itemContent']['tweet_results']['result']['edit_control']['editable_until_msecs'])
+                        tweet_msecs = int(i[x_label]['itemContent']['tweet_results']['result']['edit_control']['editable_until_msecs']) - 3600000
                     timestr = stamp2time(tweet_msecs)
 
                     #我知道这边代码很烂
@@ -190,11 +190,11 @@ def get_download_url(_user_info):
                     if 'tweet' in i[x_label]['items'][0]['item']['itemContent']['tweet_results']['result']:
                         a = i[x_label]['items'][0]['item']['itemContent']['tweet_results']['result']['tweet']['legacy']
                         frr = [a['favorite_count'], a['retweet_count'], a['reply_count']]
-                        tweet_msecs = int(i[x_label]['items'][0]['item']['itemContent']['tweet_results']['result']['tweet']['edit_control']['editable_until_msecs'])
+                        tweet_msecs = int(i[x_label]['items'][0]['item']['itemContent']['tweet_results']['result']['tweet']['edit_control']['editable_until_msecs']) - 3600000
                     else:
                         a = i[x_label]['items'][0]['item']['itemContent']['tweet_results']['result']['legacy']
                         frr = [a['favorite_count'], a['retweet_count'], a['reply_count']]
-                        tweet_msecs = int(i[x_label]['items'][0]['item']['itemContent']['tweet_results']['result']['edit_control']['editable_until_msecs'])
+                        tweet_msecs = int(i[x_label]['items'][0]['item']['itemContent']['tweet_results']['result']['edit_control']['editable_until_msecs']) - 3600000
                     timestr = stamp2time(tweet_msecs)
 
                     _result = time_comparison(tweet_msecs, start_time_stamp, end_time_stamp)

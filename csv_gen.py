@@ -1,9 +1,10 @@
 import csv
 import time
+from datetime import datetime
 
 class csv_gen():
     def __init__(self, save_path:str, user_name, screen_name, tweet_range) -> None:
-        self.f = open(f'{save_path}/{screen_name}.csv', 'w', encoding='utf-8-sig', newline='')
+        self.f = open(f'{save_path}/{screen_name}-{datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.csv', 'w', encoding='utf-8-sig', newline='')
         self.writer = csv.writer(self.f)
 
         #初始化

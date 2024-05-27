@@ -35,7 +35,7 @@ start_time_stamp,end_time_stamp = time2stamp(start_time),time2stamp(end_time)
 
 class csv_gen():
     def __init__(self, save_path:str, user_name, screen_name, tweet_range) -> None:
-        self.f = open(f'{save_path}/{screen_name}-text.csv', 'w', encoding='utf-8-sig', newline='')
+        self.f = open(f'{save_path}/{screen_name}-{datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}-text.csv', 'w', encoding='utf-8-sig', newline='')
         self.writer = csv.writer(self.f)
 
         #初始化
@@ -159,10 +159,10 @@ class text_down():
                         continue
 
                     try:
-                        _time_stamp = int(raw_text['edit_control']['editable_until_msecs'])
+                        _time_stamp = int(raw_text['edit_control']['editable_until_msecs']) - 3600000
                     except Exception:
                         if 'edit_control_initial' in raw_text['edit_control']:
-                            _time_stamp = int(raw_text['edit_control']['edit_control_initial']['editable_until_msecs'])
+                            _time_stamp = int(raw_text['edit_control']['edit_control_initial']['editable_until_msecs']) - 3600000
                         else:
                             continue
 

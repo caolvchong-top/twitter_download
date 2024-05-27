@@ -180,10 +180,10 @@ class tag_down():
             except Exception:   #低概率事件
                 continue
             try:
-                time_stamp = int(tweet['edit_control']['editable_until_msecs'])
+                time_stamp = int(tweet['edit_control']['editable_until_msecs']) - 3600000
             except Exception as e:
                 if 'edit_control_initial' in tweet['edit_control']:
-                    time_stamp = int(tweet['edit_control']['edit_control_initial']['editable_until_msecs'])
+                    time_stamp = int(tweet['edit_control']['edit_control_initial']['editable_until_msecs']) - 3600000
                 else:
                     continue
             try:
@@ -219,10 +219,10 @@ class tag_down():
                 continue
             tweet = tweet['content']['itemContent']['tweet_results']['result']
             try:
-                time_stamp = int(tweet['edit_control']['editable_until_msecs'])
+                time_stamp = int(tweet['edit_control']['editable_until_msecs']) - 3600000
             except Exception:
                 if 'edit_control_initial' in tweet['edit_control']:
-                    time_stamp = int(tweet['edit_control']['edit_control_initial']['editable_until_msecs'])
+                    time_stamp = int(tweet['edit_control']['edit_control_initial']['editable_until_msecs']) - 3600000
                 else:
                     continue
             try:

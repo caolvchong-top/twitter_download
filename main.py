@@ -92,6 +92,8 @@ with open('settings.json', 'r', encoding='utf8') as f:
     img_format = settings['img_format']
     f.close()
 
+backup_stamp = start_time_stamp
+
 _headers = {
     'user-agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36',
     'authorization':'Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA',
@@ -363,6 +365,10 @@ def main(_user_info: object):
                 elif "-vid_" in i:
                     start_time_stamp = time2stamp(re.findall(re_rule, i)[0])
                     break
+                else:
+                    start_time_stamp = backup_stamp
+        else:
+            start_time_stamp = backup_stamp
 
     download_control(_user_info)
 

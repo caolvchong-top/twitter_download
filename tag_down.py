@@ -22,11 +22,17 @@ tag = '#ヨルクラ'
 down_count = 400
 # 因为搜索结果数量可能极大，故手动确定下载总量，填200的倍数，最少200
 
+media_latest = False
+# media_latest为True时，下载最新媒体文件，False为热门内容 (与文本模式无关)
+
+# ------------------------ #
+
 text_down = False 
 #开启后变为文本下载模式，会消耗大量API次数
 
 ##########配置区域##########
 
+max_concurrent_requests = 8     #最大并发数量，默认为8，遇到多次下载失败时适当降低
 
 if text_down:
     entries_count = 20
@@ -34,6 +40,10 @@ if text_down:
 else:
     entries_count = 200
     product = 'Media'
+    if media_latest:
+        entries_count = 20
+        product = 'Latest'
+        tag += ' filter:links -filter:replies'
 
 
 
@@ -92,7 +102,7 @@ def download_control(folder_path, photo_lst):
                     print(e)
                     print(f'{_file_name}=====>第{count}次下载失败,正在重试')
 
-        semaphore = asyncio.Semaphore(8)
+        semaphore = asyncio.Semaphore(max_concurrent_requests)
         await asyncio.gather(*[asyncio.create_task(down_save(url[0], folder_path, url[1], url[2])) for url in photo_lst])   #0:url 1:time_stamp 2:user_name
 
     asyncio.run(_main())
@@ -122,8 +132,11 @@ class csv_gen():
 
 class tag_down():
     def __init__(self):
-
-        self.folder_path = os.getcwd() + os.sep + del_special_char(tag) + os.sep
+        if not text_down and media_latest:
+            folder_name = tag.replace(' filter:links -filter:replies', '')
+        else:
+            folder_name = tag
+        self.folder_path = os.getcwd() + os.sep + del_special_char(folder_name) + os.sep
 
         if not os.path.exists(self.folder_path):   #创建文件夹
             os.makedirs(self.folder_path)
@@ -148,7 +161,10 @@ class tag_down():
             if text_down:
                 self.search_save_text(url)
             else:
-                media_lst = self.search_media(url)
+                if media_latest:
+                    media_lst = self.search_media_latest(url)
+                else:
+                    media_lst = self.search_media(url)
                 if not media_lst:
                     return
                 download_control(self.folder_path, media_lst)
@@ -196,6 +212,54 @@ class tag_down():
                     media_lst.append([media_url, time_stamp, screen_name])
             except Exception as e:
                 print(e)
+        return media_lst
+    
+    def search_media_latest(self, url):
+        media_lst = []
+
+        response = httpx.get(url, headers=self._headers).text
+        raw_data = json.loads(response)
+        if not self.cursor: #第一次
+            raw_data = raw_data['data']['search_by_raw_query']['search_timeline']['timeline']['instructions'][-1]['entries']
+            if len(raw_data) == 2:
+                return
+            self.cursor = raw_data[-1]['content']['value']
+            raw_data_lst = raw_data[:-2]
+        else:
+            raw_data = raw_data['data']['search_by_raw_query']['search_timeline']['timeline']['instructions']
+            self.cursor = raw_data[-1]['entry']['content']['value']
+            raw_data_lst = raw_data[0]['entries']
+            
+        for tweet in raw_data_lst:
+            if 'promoted' in tweet['entryId']:
+                continue
+            tweet = tweet['content']['itemContent']['tweet_results']['result']
+            try:
+                screen_name = '@' + tweet['core']['user_results']['result']['legacy']['screen_name']
+            except Exception:   #低概率事件
+                continue
+            try:
+                time_stamp = int(tweet['edit_control']['editable_until_msecs']) - 3600000
+            except Exception as e:
+                if 'edit_control_initial' in tweet['edit_control']:
+                    time_stamp = int(tweet['edit_control']['edit_control_initial']['editable_until_msecs']) - 3600000
+                else:
+                    continue
+            try:
+                raw_media_lst = tweet['legacy']['extended_entities']['media']
+                for _media in raw_media_lst:
+                    if 'video_info' in _media:
+                        media_url = get_heighest_video_quality(_media['video_info']['variants'])
+                    else:
+                        media_url = _media['media_url_https']
+                    media_lst.append([media_url, time_stamp, screen_name])
+
+            except KeyError:
+                # 仍存在部分纯文本推文无法排除
+                pass
+            except Exception as e:
+                print(e)
+
         return media_lst
     
     def search_save_text(self, url):

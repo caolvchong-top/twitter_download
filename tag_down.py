@@ -21,12 +21,12 @@ tag = '#ヨルクラ'
 _filter = ''
 # (可选项) 高级搜索
 
-down_count = 200
-# 因为搜索结果数量可能极大，故手动确定下载总量，填200的倍数，最少200
+down_count = 100
+# 因为搜索结果数量可能极大，故手动确定下载总量(近似)，填50的倍数，最少50
 
 media_latest = False
-# media_latest为True时，下载最新媒体文件，False为热门内容 (与文本模式无关)
-# 此选项开启时建议 _filter 设置为 _filter = 'filter:links -filter:replies'
+# media_latest为True时，对应 [最新] 标签页，False对应 [媒体] 标签页 (与文本模式无关)
+# 开启时建议 _filter 设置为 _filter = 'filter:links -filter:replies'
 
 # ------------------------ #
 
@@ -41,7 +41,7 @@ if text_down:
     entries_count = 20
     product = 'Latest'
 else:
-    entries_count = 200
+    entries_count = 50
     product = 'Media'
     if media_latest:
         entries_count = 20
@@ -185,7 +185,10 @@ class tag_down():
         else:
             raw_data = raw_data['data']['search_by_raw_query']['search_timeline']['timeline']['instructions']
             self.cursor = raw_data[-1]['entry']['content']['value']
-            raw_data_lst = raw_data[0]['moduleItems']
+            if 'moduleItems' in raw_data[0]:
+                raw_data_lst = raw_data[0]['moduleItems']
+            else:
+                return
 
         for tweet in raw_data_lst:
             tweet = tweet['item']['itemContent']['tweet_results']['result']
@@ -226,7 +229,10 @@ class tag_down():
         else:
             raw_data = raw_data['data']['search_by_raw_query']['search_timeline']['timeline']['instructions']
             self.cursor = raw_data[-1]['entry']['content']['value']
-            raw_data_lst = raw_data[0]['entries']
+            if 'entries' in raw_data[0]:
+                raw_data_lst = raw_data[0]['entries']
+            else:
+                return
             
         for tweet in raw_data_lst:
             if 'promoted' in tweet['entryId']:

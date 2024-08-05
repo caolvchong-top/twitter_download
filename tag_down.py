@@ -8,7 +8,7 @@ import time
 import json
 import hashlib
 from datetime import datetime
-from urllib.parse import quote_plus
+from urllib.parse import quote
 
 
 ##########配置区域##########
@@ -18,12 +18,15 @@ cookie = 'auth_token=xxxxxxxxxxx; ct0=xxxxxxxxxxx;'
 
 tag = '#ヨルクラ'
 # 填入tag 带上#号
+_filter = ''
+# (可选项) 高级搜索
 
-down_count = 400
+down_count = 200
 # 因为搜索结果数量可能极大，故手动确定下载总量，填200的倍数，最少200
 
 media_latest = False
 # media_latest为True时，下载最新媒体文件，False为热门内容 (与文本模式无关)
+# 此选项开启时建议 _filter 设置为 _filter = 'filter:links -filter:replies'
 
 # ------------------------ #
 
@@ -43,7 +46,7 @@ else:
     if media_latest:
         entries_count = 20
         product = 'Latest'
-        tag += ' filter:links -filter:replies'
+_filter = ' ' + _filter
 
 
 
@@ -132,11 +135,7 @@ class csv_gen():
 
 class tag_down():
     def __init__(self):
-        if not text_down and media_latest:
-            folder_name = tag.replace(' filter:links -filter:replies', '')
-        else:
-            folder_name = tag
-        self.folder_path = os.getcwd() + os.sep + del_special_char(folder_name) + os.sep
+        self.folder_path = os.getcwd() + os.sep + del_special_char(tag) + os.sep
 
         if not os.path.exists(self.folder_path):   #创建文件夹
             os.makedirs(self.folder_path)
@@ -151,13 +150,12 @@ class tag_down():
         self._headers['cookie'] = cookie
         re_token = 'ct0=(.*?);'
         self._headers['x-csrf-token'] = re.findall(re_token, cookie)[0]
-        self._headers['referer'] = f'https://twitter.com/search?q={quote_plus(tag)}&src=typed_query&f=media'
+        self._headers['referer'] = f'https://twitter.com/search?q={quote(tag + _filter)}&src=typed_query&f=media'
 
         self.cursor = ''
 
         for i in range(down_count//entries_count):
-            url = 'https://twitter.com/i/api/graphql/tUJgNbJvuiieOXvq7OmHwA/SearchTimeline?variables={"rawQuery":"' + quote_plus(tag) + '","count":' + str(entries_count) + ',"cursor":"' + self.cursor + '","querySource":"typed_query","product":"' + product + '"}&features={"rweb_tipjar_consumption_enabled":true,"responsive_web_graphql_exclude_directive_enabled":true,"verified_phone_label_enabled":false,"creator_subscriptions_tweet_preview_api_enabled":true,"responsive_web_graphql_timeline_navigation_enabled":true,"responsive_web_graphql_skip_user_profile_image_extensions_enabled":false,"communities_web_enable_tweet_community_results_fetch":true,"c9s_tweet_anatomy_moderator_badge_enabled":true,"articles_preview_enabled":true,"tweetypie_unmention_optimization_enabled":true,"responsive_web_edit_tweet_api_enabled":true,"graphql_is_translatable_rweb_tweet_is_translatable_enabled":true,"view_counts_everywhere_api_enabled":true,"longform_notetweets_consumption_enabled":true,"responsive_web_twitter_article_tweet_consumption_enabled":true,"tweet_awards_web_tipping_enabled":false,"creator_subscriptions_quote_tweet_preview_enabled":false,"freedom_of_speech_not_reach_fetch_enabled":true,"standardized_nudges_misinfo":true,"tweet_with_visibility_results_prefer_gql_limited_actions_policy_enabled":true,"tweet_with_visibility_results_prefer_gql_media_interstitial_enabled":true,"rweb_video_timestamps_enabled":true,"longform_notetweets_rich_text_read_enabled":true,"longform_notetweets_inline_media_enabled":true,"responsive_web_enhance_cards_enabled":false}'
-
+            url = 'https://twitter.com/i/api/graphql/tUJgNbJvuiieOXvq7OmHwA/SearchTimeline?variables={"rawQuery":"' + quote(tag + _filter) + '","count":' + str(entries_count) + ',"cursor":"' + self.cursor + '","querySource":"typed_query","product":"' + product + '"}&features={"rweb_tipjar_consumption_enabled":true,"responsive_web_graphql_exclude_directive_enabled":true,"verified_phone_label_enabled":false,"creator_subscriptions_tweet_preview_api_enabled":true,"responsive_web_graphql_timeline_navigation_enabled":true,"responsive_web_graphql_skip_user_profile_image_extensions_enabled":false,"communities_web_enable_tweet_community_results_fetch":true,"c9s_tweet_anatomy_moderator_badge_enabled":true,"articles_preview_enabled":true,"tweetypie_unmention_optimization_enabled":true,"responsive_web_edit_tweet_api_enabled":true,"graphql_is_translatable_rweb_tweet_is_translatable_enabled":true,"view_counts_everywhere_api_enabled":true,"longform_notetweets_consumption_enabled":true,"responsive_web_twitter_article_tweet_consumption_enabled":true,"tweet_awards_web_tipping_enabled":false,"creator_subscriptions_quote_tweet_preview_enabled":false,"freedom_of_speech_not_reach_fetch_enabled":true,"standardized_nudges_misinfo":true,"tweet_with_visibility_results_prefer_gql_limited_actions_policy_enabled":true,"tweet_with_visibility_results_prefer_gql_media_interstitial_enabled":true,"rweb_video_timestamps_enabled":true,"longform_notetweets_rich_text_read_enabled":true,"longform_notetweets_inline_media_enabled":true,"responsive_web_enhance_cards_enabled":false}'
             if text_down:
                 self.search_save_text(url)
             else:

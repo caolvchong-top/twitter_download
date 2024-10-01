@@ -21,6 +21,9 @@ user_lst = ['jeleechandayo','yorukura_anime']
 time_range = "2024-04-21:2030-01-01"
 # 时间范围限制,格式如 1990-01-01:2030-01-01
 
+has_retweet = False
+# 是否包含转推
+
 ##########配置区域##########
 
 
@@ -42,7 +45,7 @@ class csv_gen():
         self.writer.writerow([user_name, '@' + screen_name])
         self.writer.writerow(['Tweet Range : ' + tweet_range])
         self.writer.writerow(['Save Path : ' + save_path])
-        main_par = ['Tweet Date', 'Tweet URL', 'Tweet Content', 'Favorite Count', 
+        main_par = ['Display Name', 'User Name', 'Tweet Date', 'Tweet URL', 'Tweet Content', 'Favorite Count', 
                     'Retweet Count', 'Reply Count']
         self.writer.writerow(main_par)
 
@@ -57,7 +60,7 @@ class csv_gen():
         return otherStyleTime
     
     def data_input(self, main_par_info:list) -> None:   #数据格式参见 main_par
-        main_par_info[0] = self.stamp2time(main_par_info[0])    #传进来的是 int 时间戳, 故转换一下
+        main_par_info[2] = self.stamp2time(main_par_info[2])    #传进来的是 int 时间戳, 故转换一下
         self.writer.writerow(main_par_info)
 
 
@@ -155,8 +158,20 @@ class text_down():
                         continue
                 if 'tweet' in tweet['entryId']:
                     raw_text = tweet['content']['itemContent']['tweet_results']['result']
-                    if 'retweeted_status_result' in raw_text['legacy']:       #默认排除转推
-                        continue
+                    if 'tweet' in raw_text:
+                        raw_text = raw_text['tweet']
+                    if 'retweeted_status_result' in raw_text['legacy']:       #转推判断
+                        if has_retweet:
+                            raw_text = raw_text['legacy']['retweeted_status_result']['result']
+                            if 'tweet' in raw_text:
+                                raw_text = raw_text['tweet']
+                            _display_name = raw_text['core']['user_results']['result']['legacy']['name']
+                            _screen_name = '@' + raw_text['core']['user_results']['result']['legacy']['screen_name']
+                        else:
+                            continue
+                    else:
+                        _display_name = ''
+                        _screen_name = ''
 
                     try:
                         _time_stamp = int(raw_text['edit_control']['editable_until_msecs']) - 3600000
@@ -176,10 +191,11 @@ class text_down():
                     _Retweet_Count = raw_text['legacy']['retweet_count']
                     _Reply_Count = raw_text['legacy']['reply_count']
                     _status_id = raw_text['legacy']['conversation_id_str']
-                    _tweet_url = f'https://twitter.com/{self._user_info.screen_name}/status/{_status_id}'
+                    screen_name = raw_text['core']['user_results']['result']['legacy']['screen_name']
+                    _tweet_url = f'https://twitter.com/{screen_name}/status/{_status_id}'
                     _tweet_content = raw_text['legacy']['full_text'].split('https://t.co/')[0]
 
-                    self.csv_file.data_input([_time_stamp, _tweet_url, _tweet_content, _Favorite_Count, _Retweet_Count, _Reply_Count])
+                    self.csv_file.data_input([_display_name, _screen_name, _time_stamp, _tweet_url, _tweet_content, _Favorite_Count, _Retweet_Count, _Reply_Count])
 
 if __name__ == '__main__':
     for user in user_lst:

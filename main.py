@@ -236,7 +236,15 @@ def get_download_url(_user_info):
         global request_count
         response = httpx.get(url, headers=_headers, proxies=proxies).text
         request_count += 1
-        raw_data = json.loads(response)
+        try:
+            raw_data = json.loads(response)
+        except Exception:
+            if 'Rate limit exceeded' in response:
+                print('API次数已超限')
+            else:
+                print('获取数据失败')
+            print(response)
+            return
         if has_highlights:  #亮点模式
             raw_data = raw_data['data']['user']['result']['timeline']['timeline']['instructions'][-1]['entries']
         elif has_retweet:   #与likes共用

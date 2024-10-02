@@ -175,7 +175,15 @@ class tag_down():
         media_lst = []
 
         response = httpx.get(url, headers=self._headers).text
-        raw_data = json.loads(response)
+        try:
+            raw_data = json.loads(response)
+        except Exception:
+            if 'Rate limit exceeded' in response:
+                print('API次数已超限')
+            else:
+                print('获取数据失败')
+            print(response)
+            return
         if not self.cursor: #第一次
             raw_data = raw_data['data']['search_by_raw_query']['search_timeline']['timeline']['instructions'][-1]['entries']
             if len(raw_data) == 2:

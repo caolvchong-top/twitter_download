@@ -68,6 +68,7 @@ git clone https://github.com/caolvchong-top/twitter_download.git
 cd twitter_download 
 pip3 install httpx==0.23.0
 #非0.23版本可能会出现不知名问题
+#Python版本建议为3.10，不能大于3.11
 ``` 
 **运行** : 
 ``` 

@@ -295,6 +295,8 @@ class tag_down():
             if 'promoted' in tweet['entryId']:
                 continue
             tweet = tweet['content']['itemContent']['tweet_results']['result']
+            if 'tweet' in tweet and 'edit_control' in tweet['tweet']:
+                tweet = tweet['tweet']
             try:
                 time_stamp = int(tweet['edit_control']['editable_until_msecs']) - 3600000
             except Exception:

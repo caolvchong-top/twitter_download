@@ -349,7 +349,7 @@ def download_control(_user_info):
 
     asyncio.run(_main())
 
-def main(_user_info: object,tag:str|None=None):
+def main(_user_info: object,label:str|None=None):
     re_token = 'ct0=(.*?);'
     _headers['x-csrf-token'] = re.findall(re_token,_headers['cookie'])[0]
     _headers['referer'] = 'https://twitter.com/' + _user_info.screen_name
@@ -357,10 +357,10 @@ def main(_user_info: object,tag:str|None=None):
         return False
     print_info(_user_info)
 
-    if tag is None or tag =="":
+    if label is None or label =="":
         _path = os.path.join(settings['save_path'], _user_info.screen_name)
     else:
-        _path = os.path.join(settings['save_path'], tag, _user_info.screen_name)
+        _path = os.path.join(settings['save_path'], label, _user_info.screen_name)
     
     if not os.path.exists(_path):   #创建文件夹
         os.makedirs(_path)       #用户名建文件夹
@@ -400,31 +400,31 @@ def main(_user_info: object,tag:str|None=None):
         del cache_data
     print(f'{_user_info.name}下载完成\n\n')
 
-def tag_parser(user_list, tag_old=None):
+def label_parser(user_list, label_old=None):
     invalid_chars = r'[<>\s:"/\\|?*]'
     match user_list:
         case str(users):
-            return zip(filter(None, re.split(",",users)), itertools.repeat(tag_old))
+            return zip(filter(None, re.split(",",users)), itertools.repeat(label_old))
         case list(users_list):
             download_list = []
             for user in users_list:
                 if type(user) is not str:
                     ## 比如 "["A,B",[{"A":"C" }] , {"A":"D" }]" , 
-                    ## 会在文件夹A里混杂用户名为A的数据和tag为A的数据, 应该是不太可能用到的，防呆处理全部禁止
-                    raise SettingException(f"\"{tag_old}\" 下列表之内必须是用户名，不能嵌套字典或列表！")
+                    ## 会在文件夹A里混杂用户名为A的数据和label为A的数据, 应该是不太可能用到的，防呆处理全部禁止
+                    raise SettingException(f"\"{label_old}\" 下列表之内必须是用户名，不能嵌套字典或列表！")
                 download_list = itertools.chain(download_list,
-                                            tag_parser(user,tag_old))
+                                            label_parser(user,label_old))
             return download_list
-        case dict(tag_user_list):
+        case dict(label_user_list):
             download_list = []
-            for tag in tag_user_list:
-                if re.search(invalid_chars, tag):
-                    illeagal = re.search("(" + invalid_chars+")",tag).group(1)
-                    raise SettingException( f"\"{tag}\" 含有非法字符\"{illeagal}\"，不能作为文件夹的名字！")
-                newtag = os.path.join(tag_old,tag) if tag_old is not None else tag
+            for label in label_user_list:
+                if re.search(invalid_chars, label):
+                    illeagal = re.search("(" + invalid_chars+")",label).group(1)
+                    raise SettingException( f"\"{label}\" 含有非法字符\"{illeagal}\"，不能作为文件夹的名字！")
+                label = os.path.join(label_old,label) if label_old is not None else label
                 download_list = itertools.chain(download_list,
-                                                tag_parser(tag_user_list[tag],
-                                                            newtag))
+                                                label_parser(label_user_list[label],
+                                                            label))
             return download_list
         case _:
             raise SettingException("user_lst 格式错误!")
@@ -433,9 +433,9 @@ def tag_parser(user_list, tag_old=None):
 if __name__=='__main__':
     try:
         _start = time.time()
-        download_list = tag_parser(settings["user_lst"])
-        for i,tag_as_folder in download_list:
-            main(User_info(i),tag_as_folder)
+        download_list = label_parser(settings["user_lst"])
+        for i,label_as_folder in download_list:
+            main(User_info(i),label_as_folder)
             start_label = True
             First_Page = True
         print(f'共耗时:{time.time()-_start}秒\n共调用{request_count}次API\n共下载{down_count}份图片/视频')

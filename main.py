@@ -421,10 +421,10 @@ def label_parser(user_list, label_old=None):
                 if re.search(invalid_chars, label):
                     illeagal = re.search("(" + invalid_chars+")",label).group(1)
                     raise SettingException( f"\"{label}\" 含有非法字符\"{illeagal}\"，不能作为文件夹的名字！")
-                label = os.path.join(label_old,label) if label_old is not None else label
+                label_new = os.path.join(label_old,label) if label_old is not None else label
                 download_list = itertools.chain(download_list,
                                                 label_parser(label_user_list[label],
-                                                            label))
+                                                            label_new))
             return download_list
         case _:
             raise SettingException("user_lst 格式错误!")

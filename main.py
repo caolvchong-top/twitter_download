@@ -5,10 +5,12 @@ import httpx
 import asyncio
 import os
 import json
+import itertools
 from user_info import User_info
 from csv_gen import csv_gen
 from cache_gen import cache_gen
 from url_utils import quote_url
+from SettingException import SettingException
 
 max_concurrent_requests = 8     #最大并发数量，默认为8，对自己网络有自信的可以调高; 遇到多次下载失败时适当降低
 
@@ -54,11 +56,18 @@ end_time_stamp = 2548484357000    #2050-10-04
 start_label = True
 First_Page = True       #首页提取内容时特殊处理
 
-with open('settings.json', 'r', encoding='utf8') as f:
+
+setting_file = 'settings.json'
+try:
+  setting_file = sys.argv[1]
+except:
+    pass
+
+with open(setting_file, 'r', encoding='utf8') as f:
     settings = json.load(f)
     if not settings['save_path']:
         settings['save_path'] = os.getcwd()
-    settings['save_path'] += os.sep
+    
     if settings['has_retweet']:
         has_retweet = True
     if settings['high_lights']:
@@ -289,10 +298,10 @@ def download_control(_user_info):
     async def _main():
         async def down_save(url, prefix, csv_info, order: int):
             if '.mp4' in url:
-                _file_name = f'{_user_info.save_path + os.sep}{prefix}_{_user_info.count + order}.mp4'
+                _file_name = os.path.join(_user_info.save_path, f'{prefix}_{_user_info.count + order}.mp4')
             else:
                 try:
-                    _file_name = f'{_user_info.save_path + os.sep}{prefix}_{_user_info.count + order}.{img_format}'
+                    _file_name = os.path.join(_user_info.save_path, f'{prefix}_{_user_info.count + order}.{img_format}')
                     url += f'?format={img_format}&name=4096x4096'
                 except Exception as e:
                     print(url)
@@ -340,19 +349,23 @@ def download_control(_user_info):
 
     asyncio.run(_main())
 
-def main(_user_info: object):
+def main(_user_info: object,label:str|None=None):
     re_token = 'ct0=(.*?);'
     _headers['x-csrf-token'] = re.findall(re_token,_headers['cookie'])[0]
     _headers['referer'] = 'https://twitter.com/' + _user_info.screen_name
     if not get_other_info(_user_info):
         return False
     print_info(_user_info)
-    _path = settings['save_path'] + _user_info.screen_name
-    if not os.path.exists(_path):   #创建文件夹
-        os.makedirs(settings['save_path']+_user_info.screen_name)       #用户名建文件夹
-        _user_info.save_path = settings['save_path']+_user_info.screen_name
+
+    if label is None or label =="":
+        _path = os.path.join(settings['save_path'], _user_info.screen_name)
     else:
-        _user_info.save_path = _path
+        _path = os.path.join(settings['save_path'], label, _user_info.screen_name)
+    
+    if not os.path.exists(_path):   #创建文件夹
+        os.makedirs(_path)       #用户名建文件夹
+    _user_info.save_path = _path 
+
 
     if not has_likes:
         global csv_file
@@ -387,10 +400,44 @@ def main(_user_info: object):
         del cache_data
     print(f'{_user_info.name}下载完成\n\n')
 
+def label_parser(user_list, label_old=None):
+    invalid_chars = r'[<>\s:"/\\|?*]'
+    match user_list:
+        case str(users):
+            return zip(filter(None, re.split(",",users)), itertools.repeat(label_old))
+        case list(users_list):
+            download_list = []
+            for user in users_list:
+                if type(user) is not str:
+                    ## 比如 "["A,B",[{"A":"C" }] , {"A":"D" }]" , 
+                    ## 会在文件夹A里混杂用户名为A的数据和label为A的数据, 应该是不太可能用到的，防呆处理全部禁止
+                    raise SettingException(f"\"{label_old}\" 下列表之内必须是用户名，不能嵌套字典或列表！")
+                download_list = itertools.chain(download_list,
+                                            label_parser(user,label_old))
+            return download_list
+        case dict(label_user_list):
+            download_list = []
+            for label in label_user_list:
+                if re.search(invalid_chars, label):
+                    illeagal = re.search("(" + invalid_chars+")",label).group(1)
+                    raise SettingException( f"\"{label}\" 含有非法字符\"{illeagal}\"，不能作为文件夹的名字！")
+                label_new = os.path.join(label_old,label) if label_old is not None else label
+                download_list = itertools.chain(download_list,
+                                                label_parser(label_user_list[label],
+                                                            label_new))
+            return download_list
+        case _:
+            raise SettingException("user_lst 格式错误!")
+
+
 if __name__=='__main__':
-    _start = time.time()
-    for i in settings['user_lst'].split(','):
-        main(User_info(i))
-        start_label = True
-        First_Page = True
-    print(f'共耗时:{time.time()-_start}秒\n共调用{request_count}次API\n共下载{down_count}份图片/视频')
+    try:
+        _start = time.time()
+        download_list = label_parser(settings["user_lst"])
+        for i,label_as_folder in download_list:
+            main(User_info(i),label_as_folder)
+            start_label = True
+            First_Page = True
+        print(f'共耗时:{time.time()-_start}秒\n共调用{request_count}次API\n共下载{down_count}份图片/视频')
+    except SettingException as e:
+        print(e)

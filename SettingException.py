@@ -1,0 +1,2 @@
+class SettingException(Exception):
+    pass

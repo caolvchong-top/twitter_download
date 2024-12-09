@@ -5,6 +5,7 @@ import httpx
 import asyncio
 import os
 import json
+import itertools
 from user_info import User_info
 from csv_gen import csv_gen
 from cache_gen import cache_gen
@@ -340,19 +341,22 @@ def download_control(_user_info):
 
     asyncio.run(_main())
 
-def main(_user_info: object):
+def main(_user_info: object,tag:str|None=None):
     re_token = 'ct0=(.*?);'
     _headers['x-csrf-token'] = re.findall(re_token,_headers['cookie'])[0]
     _headers['referer'] = 'https://twitter.com/' + _user_info.screen_name
     if not get_other_info(_user_info):
         return False
     print_info(_user_info)
-    _path = settings['save_path'] + _user_info.screen_name
-    if not os.path.exists(_path):   #创建文件夹
-        os.makedirs(settings['save_path']+_user_info.screen_name)       #用户名建文件夹
-        _user_info.save_path = settings['save_path']+_user_info.screen_name
+
+    tag= ""
+    if tag is None or tag =="":
+        _path = os.path.join(settings['save_path'], _user_info.screen_name)
     else:
-        _user_info.save_path = _path
+        _path = os.path.join(settings['save_path'], tag,_user_info.screen_name)
+    if not os.path.exists(_path):   #创建文件夹
+        os.makedirs(_path)       #用户名建文件夹
+    _user_info.save_path = _path 
 
     if not has_likes:
         global csv_file
@@ -389,8 +393,18 @@ def main(_user_info: object):
 
 if __name__=='__main__':
     _start = time.time()
-    for i in settings['user_lst'].split(','):
-        main(User_info(i))
+    
+    download_list = []
+    user_list = settings['user_lst']
+    if type(user_list) is str:
+        download_list = zip(user_list.split(','), itertools.repeat(None))
+    elif type(user_list) is dict:
+        for k in user_list:
+            download_list = itertools.chain(download_list, zip(user_list[k].split(','),itertools.repeat(str(k))))
+
+    for i in download_list:
+        print(i)
+        # main(User_info(i))
         start_label = True
         First_Page = True
     print(f'共耗时:{time.time()-_start}秒\n共调用{request_count}次API\n共下载{down_count}份图片/视频')

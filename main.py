@@ -56,7 +56,14 @@ end_time_stamp = 2548484357000    #2050-10-04
 start_label = True
 First_Page = True       #首页提取内容时特殊处理
 
-with open('settings.json', 'r', encoding='utf8') as f:
+
+setting_file = 'settings.json'
+try:
+  setting_file = sys.argv[1]
+except:
+    pass
+
+with open(setting_file, 'r', encoding='utf8') as f:
     settings = json.load(f)
     if not settings['save_path']:
         settings['save_path'] = os.getcwd()
@@ -291,10 +298,10 @@ def download_control(_user_info):
     async def _main():
         async def down_save(url, prefix, csv_info, order: int):
             if '.mp4' in url:
-                _file_name = f'{_user_info.save_path + os.sep}{prefix}_{_user_info.count + order}.mp4'
+                _file_name = os.path.join(_user_info.save_path, f'{prefix}_{_user_info.count + order}.mp4')
             else:
                 try:
-                    _file_name = f'{_user_info.save_path + os.sep}{prefix}_{_user_info.count + order}.{img_format}'
+                    _file_name = os.path.join(_user_info.save_path, f'{prefix}_{_user_info.count + order}.{img_format}')
                     url += f'?format={img_format}&name=4096x4096'
                 except Exception as e:
                     print(url)

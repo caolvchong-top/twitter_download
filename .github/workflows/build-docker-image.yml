@@ -6,6 +6,9 @@ on:
     tags:
       - "v*.*.*"
 
+env:
+  REGISTRY: ghcr.io
+
 jobs:
   build:
     runs-on: ubuntu-latest

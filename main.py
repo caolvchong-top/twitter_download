@@ -6,11 +6,13 @@ import asyncio
 import os
 import json
 import sys
-sys.path.append('.')
+
 from user_info import User_info
 from csv_gen import csv_gen
 from cache_gen import cache_gen
 from url_utils import quote_url
+
+sys.path.append('.')
 
 max_concurrent_requests = 8     #最大并发数量，默认为8，对自己网络有自信的可以调高; 遇到多次下载失败时适当降低
 

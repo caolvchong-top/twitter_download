@@ -7,12 +7,13 @@ import os
 import json
 import sys
 
+sys.path.append('.')
 from user_info import User_info
 from csv_gen import csv_gen
 from cache_gen import cache_gen
 from url_utils import quote_url
 
-sys.path.append('.')
+
 
 max_concurrent_requests = 8     #最大并发数量，默认为8，对自己网络有自信的可以调高; 遇到多次下载失败时适当降低
 
@@ -102,7 +103,7 @@ with open('settings.json', 'r', encoding='utf8') as f:
     
     if settings['orig_format']:
         orig_format = settings['orig_format']
-        img_format = 'jpg'
+        img_format = 'jpg';
     if settings['orig_fail_alert']:
         orig_fail_alert = settings['orig_fail_alert']
 
@@ -308,7 +309,10 @@ def download_control(_user_info):
             else:
                 try:
                     _file_name = f'{_user_info.save_path + os.sep}{prefix}_{_user_info.count + order}.{img_format}'
-                    url += f'?format={img_format}&name=orig'
+                    if orig_format:
+                        url += f'?format=jpg&name=orig'
+                    else:
+                        url += f'?format={img_format}&name=4096x4096'
                 except Exception as e:
                     print(url)
                     return False
@@ -342,11 +346,11 @@ def download_control(_user_info):
                     if orig_format:
                         if orig_fail == 0:
                             orig_fail = 1
+                            url = url.replace('format=jpg', 'format=png')
+                            _file_name = re.sub(r'jpg$', "png", _file_name)
                             if orig_fail_alert:
                                 print(f'{_file_name}=====>JPEG 格式的原图下载失败, 正在尝试使用 PNG 格式。({repr(e)})')
                                 print(url)
-                            url = url.replace('format=jpg', 'format=png')
-                            _file_name = re.sub(r'jpg$', "png", _file_name)
                         elif orig_fail == 1: # 一般不会遇到下面这种情况
                             orig_fail = 2
                             url = url.replace('name=orig', 'name=4096x4096')

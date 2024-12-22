@@ -47,6 +47,11 @@
     "proxy": "",
     "proxy_info": "手动配置代理,默认为空,非必要无需填写 格式: http://localhost:port ",
 
+    "orig_format": true,
+    "orig_format_info": "忽略 img_format 并依次尝试以 JPEG, PNG 格式下载原图 (name=orig) 。均下载错误后会退回使用 PNG name=4096x4096 进行下载)",
+
+    "orig_fail_alert": true,
+    "orig_fail_alert_info": "开启原图下载错误的提示",
 
     "(๑´ڡ`๑)": "info 是注释，凑合着看吧"
 }

@@ -333,11 +333,11 @@ def download_control(_user_info):
             
                     break
                 except Exception as e:
-                    if '.mp4' in url or not orig_format or orig_fail == 2:
+                    if '.mp4' in url or not orig_format or str(e) != "404":
                         count += 1
                         print(f'{_file_name}=====>第{count}次下载失败,正在重试(多次失败时请降低main.py第16行-异步模式)')
                         print(url)
-                    if orig_format:
+                    elif orig_format:
                         if orig_fail == 0:
                             orig_fail = 1
                             url = url.replace('format=jpg', 'format=png')

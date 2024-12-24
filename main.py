@@ -13,8 +13,6 @@ from csv_gen import csv_gen
 from cache_gen import cache_gen
 from url_utils import quote_url
 
-
-
 max_concurrent_requests = 8     #最大并发数量，默认为8，对自己网络有自信的可以调高; 遇到多次下载失败时适当降低
 
 def del_special_char(string):
@@ -55,7 +53,6 @@ async_down = True
 autoSync = False
 
 orig_format = False # 尝试原图下载
-orig_fail_alert = False # 开启原图下载错误的提示
 
 start_time_stamp = 655028357000   #1990-10-04
 end_time_stamp = 2548484357000    #2050-10-04
@@ -99,13 +96,10 @@ with open('settings.json', 'r', encoding='utf8') as f:
         proxies = None
 
 ############
-    img_format = settings['img_format']
+    img_format = 'jpg'
     
     if settings['orig_format']:
         orig_format = settings['orig_format']
-        img_format = 'jpg';
-    if settings['orig_fail_alert']:
-        orig_fail_alert = settings['orig_fail_alert']
 
     f.close()
 
@@ -317,7 +311,7 @@ def download_control(_user_info):
                     print(url)
                     return False
             count = 0
-            orig_fail = 0 # 0-原图下载成功 或未开启原图下载  1-PNG原图下载失败，尝试JPEG原图下载  2-原图下载失败，尝试使用name=4096x4096下载
+            orig_fail = 0 # 0-原图下载成功 或未开启原图下载  1-JPEG 原图下载失败，尝试 PNG 原图下载  2-原图下载失败，尝试使用name=4096x4096下载
             while True:
                 try:
                     async with semaphore:
@@ -341,22 +335,16 @@ def download_control(_user_info):
                 except Exception as e:
                     if '.mp4' in url or not orig_format or orig_fail == 2:
                         count += 1
-                        print(f'{_file_name}=====>第{count}次下载失败,正在重试(多次失败时请降低main.py第11行-异步模式)')
+                        print(f'{_file_name}=====>第{count}次下载失败,正在重试(多次失败时请降低main.py第16行-异步模式)')
                         print(url)
                     if orig_format:
                         if orig_fail == 0:
                             orig_fail = 1
                             url = url.replace('format=jpg', 'format=png')
                             _file_name = re.sub(r'jpg$', "png", _file_name)
-                            if orig_fail_alert:
-                                print(f'{_file_name}=====>JPEG 格式的原图下载失败, 正在尝试使用 PNG 格式。({repr(e)})')
-                                print(url)
                         elif orig_fail == 1: # 一般不会遇到下面这种情况
                             orig_fail = 2
                             url = url.replace('name=orig', 'name=4096x4096')
-                            if orig_fail_alert:
-                                print(f'{_file_name}=====>原图下载失败, 正在下载其最大分辨率(小于4K)。({repr(e)})')
-                                print(url)
 
         while True:
             photo_lst = get_download_url(_user_info)

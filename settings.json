@@ -32,8 +32,8 @@
     "autoSync": false,
     "autoSync_info": "开启后将基于本地已有的内容自动同步最新的部分, 本质上是自动调整时间范围的左半部分, 右半建议2030-01-01或更长",
 
-    "img_format": "png",
-    "img_format_info": "下载图片/视频的质量(png为高质量,jpg为标准质量)",
+    "orig_format": true,
+    "orig_format_info": "开启后将依次尝试以 JPEG, PNG 格式下载原图 (name=orig) ，均下载错误后会退回使用 PNG name=4096x4096 进行下载)。关闭时则全部使用 JPEG 格式，且不超过 4K 的分辨率进行下载。",
 
     "has_video": true,
     "has_video_info": "是否下载推文中的视频",
@@ -42,11 +42,10 @@
     "log_output_info": "是否需要下载过程日志输出",
 
     "async_down": true,
-    "async_down_info": "异步下载,默认开启,网络不好时可以关闭,并发数量可在主函数11行修改",
+    "async_down_info": "异步下载,默认开启,网络不好时可以关闭,并发数量可在主函数16行修改",
 
     "proxy": "",
     "proxy_info": "手动配置代理,默认为空,非必要无需填写 格式: http://localhost:port ",
-
 
     "(๑´ڡ`๑)": "info 是注释，凑合着看吧"
 }

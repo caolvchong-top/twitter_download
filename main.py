@@ -52,7 +52,6 @@ down_log = False
 async_down = True
 autoSync = False
 
-orig_format = False # 尝试原图下载
 
 start_time_stamp = 655028357000   #1990-10-04
 end_time_stamp = 2548484357000    #2050-10-04
@@ -96,10 +95,12 @@ with open('settings.json', 'r', encoding='utf8') as f:
         proxies = None
 
 ############
-    img_format = 'jpg'
-    
-    if settings['orig_format']:
-        orig_format = settings['orig_format']
+    if settings['image_format'] == 'orig':
+        orig_format = True
+        img_format = 'jpg'
+    else:
+        orig_format = False
+        img_format = settings['image_format']
 
     f.close()
 
@@ -303,10 +304,10 @@ def download_control(_user_info):
             else:
                 try:
                     _file_name = f'{_user_info.save_path + os.sep}{prefix}_{_user_info.count + order}.{img_format}'
-                    if orig_format:
+                    if img_format != 'png':
                         url += f'?format=jpg&name=orig'
                     else:
-                        url += f'?format={img_format}&name=4096x4096'
+                        url += f'?format=png&name=4096x4096'
                 except Exception as e:
                     print(url)
                     return False
@@ -333,15 +334,18 @@ def download_control(_user_info):
             
                     break
                 except Exception as e:
-                    if '.mp4' in url or not orig_format or str(e) != "404":
+                    if '.mp4' in url or img_format=="png" or str(e) != "404":
                         count += 1
                         print(f'{_file_name}=====>第{count}次下载失败,正在重试(多次失败时请降低main.py第16行-异步模式)')
                         print(url)
-                    elif orig_format:
+                    elif img_format!="png":
                         if orig_fail == 0:
                             orig_fail = 1
-                            url = url.replace('format=jpg', 'format=png')
-                            _file_name = re.sub(r'jpg$', "png", _file_name)
+                            if orig_format:
+                                url = url.replace('format=jpg', 'format=png')
+                                _file_name = re.sub(r'jpg$', "png", _file_name)
+                            else:
+                                url = url.replace('name=orig', 'name=4096x4096')
                         elif orig_fail == 1: # 一般不会遇到下面这种情况
                             orig_fail = 2
                             url = url.replace('name=orig', 'name=4096x4096')

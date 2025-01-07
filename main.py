@@ -6,6 +6,8 @@ import asyncio
 import os
 import json
 import sys
+import piexif
+import subprocess
 
 sys.path.append('.')
 from user_info import User_info
@@ -331,7 +333,17 @@ def download_control(_user_info):
 
                     if log_output:
                         print(f'{_file_name}=====>下载完成')
-            
+
+                    # 添加拍摄日期
+                    if _file_name.lower().endswith('.mp4'):
+                        modify_mp4_creation_date(_file_name)
+                    elif _file_name.lower().endswith('.png'):
+                        new_jpeg_file_name = convert_png_to_jpeg(_file_name)
+                        modify_image_creation_date(new_jpeg_file_name)
+                        os.remove(_file_name)  # 删除原始PNG文件
+                    else:
+                        modify_image_creation_date(_file_name)
+
                     break
                 except Exception as e:
                     if '.mp4' in url or img_format=="png" or str(e) != "404":
@@ -349,6 +361,89 @@ def download_control(_user_info):
                         elif orig_fail == 1: # 一般不会遇到下面这种情况
                             orig_fail = 2
                             url = url.replace('name=orig', 'name=4096x4096')
+
+        def extract_datetime_from_filename(filename) -> datetime | None:
+            # 定义正则表达式，匹配特定的日期时间格式：YYYY-MM-DD HH-mm-img_ 或 vid_
+            pattern = r"(\d{4})-(\d{2})-(\d{2}) (\d{2})-(\d{2})-(img|vid)_\d+\.(jpg|mp4)"
+            match = re.search(pattern, filename, re.IGNORECASE)
+            if match:
+                try:
+                    date_time_str = "{0}-{1}-{2} {3}:{4}".format(*match.groups()[:5])
+                    return datetime.strptime(date_time_str, "%Y-%m-%d %H:%M")
+                except ValueError:
+                    pass
+            return None
+
+        def modify_image_creation_date(image_file_path):
+            """
+            根据文件名修改图片的创建日期（即拍摄日期）。
+            :param image_file_path: 图片文件的路径。
+            """
+            extracted_date = extract_datetime_from_filename(os.path.basename(image_file_path))
+
+            if not extracted_date:
+                print(f"无法从文件名中提取有效日期: {image_file_path}")
+                return
+
+            try:
+                exif_dict = piexif.load(image_file_path)
+                # 更新 DateTimeOriginal 和 DateTimeDigitized 字段
+                exif_dict["Exif"][piexif.ExifIFD.DateTimeOriginal] = extracted_date.strftime("%Y:%m:%d %H:%M:%S").encode("utf-8")
+                exif_dict["Exif"][piexif.ExifIFD.DateTimeDigitized] = extracted_date.strftime("%Y:%m:%d %H:%M:%S").encode("utf-8")
+
+                exif_bytes = piexif.dump(exif_dict)
+                piexif.insert(exif_bytes, image_file_path)
+
+                print(f"已更新文件 {image_file_path} 的拍摄日期为: {extracted_date}")
+            except Exception as e:
+                print(f"处理图片时出错: {image_file_path}, 错误信息: {e}")
+
+        def modify_mp4_creation_date(mp4_file_path):
+            """
+            根据文件名修改MP4文件的创建日期。
+            :param mp4_file_path: MP4文件的路径。
+            """
+            extracted_date = extract_datetime_from_filename(os.path.basename(mp4_file_path))
+
+            if not extracted_date:
+                print(f"无法从文件名中提取有效日期: {mp4_file_path}")
+                return
+
+            try:
+                mod_time = extracted_date.strftime('%Y-%m-%d %H:%M:%S %Z')
+
+                command = [
+                    'exiftool',
+                    '-overwrite_original',  # 覆盖原文件而不是创建新文件
+                    f'-MediaCreateDate={mod_time}',  # 设置创建媒体时间
+                    f'-MediaModifyDate={mod_time}',  # 设置修改媒体时间
+                    f'-CreateDate={mod_time}',       # 设置拍摄日期
+                    f'-ModifyDate={mod_time}',       # 设置最后修改日期
+                    mp4_file_path
+                ]
+                
+                result = subprocess.run(command, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+                print(f"已更新文件 {mp4_file_path} 的创建日期为: {extracted_date}")
+            except Exception as e:
+                print(f"处理视频时出错: {mp4_file_path}, 错误信息: {e}")
+
+        def convert_png_to_jpeg(png_file_path):
+            """
+            将PNG图片转换为JPEG格式，并返回新文件的路径。
+            :param png_file_path: PNG图片文件的路径。
+            :return: 转换后的JPEG文件路径。
+            """
+            jpeg_file_path = os.path.splitext(png_file_path)[0] + ".jpg"
+            try:
+                with Image.open(png_file_path) as img:
+                    rgb_img = img.convert('RGB')  # 确保图片是RGB模式
+                    rgb_img.save(jpeg_file_path, 'JPEG')
+                print(f"已将 {png_file_path} 转换为 {jpeg_file_path}")
+                return jpeg_file_path
+            except Exception as e:
+                print(f"转换图片时出错: {png_file_path}, 错误信息: {e}")
+                return None
 
         while True:
             photo_lst = get_download_url(_user_info)

@@ -80,7 +80,7 @@ python3 main.py
 **Windows** 和上面的一样，配置完setting.json后运行main.py即可 
 
 
-Tag_Down 功能扩展 (高级搜索)
+Tag_Down 功能扩展 (高级搜索) &nbsp;&nbsp; <sub>//万金油</sub> 
 ---
 ~~其实按功能应该叫`search_down`~~
 

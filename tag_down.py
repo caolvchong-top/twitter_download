@@ -18,9 +18,13 @@ cookie = 'auth_token=xxxxxxxxxxx; ct0=xxxxxxxxxxx;'
 # 填入 cookie (auth_token与ct0字段) //重要:替换掉其中的x即可, 注意不要删掉分号
 
 tag = '#ヨルクラ'
-# 填入tag 带上#号
+# 填入tag 带上#号 可留空
 _filter = ''
 # (可选项) 高级搜索
+# 请在 https://x.com/search-advanced 中组装搜索条件，复制搜索栏的内容填入_filter
+# 当_filter中包含目标标签时，tag选项可以留空
+
+# ↑↑ 当tag选项留空时，将尝试以_filter的内容作为文件夹名称
 
 down_count = 100
 # 因为搜索结果数量可能极大，故手动确定下载总量(近似)，填50的倍数，最少50
@@ -42,12 +46,15 @@ max_concurrent_requests = 8     #最大并发数量，默认为8，遇到多次�
 if text_down:
     entries_count = 20
     product = 'Latest'
+    mode = 'text'
 else:
     entries_count = 50
     product = 'Media'
+    mode = 'media'
     if media_latest:
         entries_count = 20
         product = 'Latest'
+        mode = 'media_latest'
 _filter = ' ' + _filter
 
 
@@ -81,46 +88,45 @@ def get_heighest_video_quality(variants) -> str:   #找到最高质量的视频�
                     heighest_url = i['url']
         return heighest_url
 
-def download_control(folder_path, photo_lst):
+def download_control(media_lst, _csv):
     async def _main():
-        async def down_save(url, folder_path, time_stamp, user_name):
-            if '.mp4' in url:
-                _file_name = f'{folder_path}{stamp2time(time_stamp)}_{user_name}_{hash_save_token(url)}.mp4'
-            else:
-                try:
-                    _file_name = f'{folder_path}{stamp2time(time_stamp)}_{user_name}_{hash_save_token(url)}.png'
-                    url += '?format=png&name=4096x4096'
-                except Exception as e:
-                    print(e)
-                    return False
+        async def down_save(url, _csv_info, is_image):
+            if is_image:
+                url += '?format=png&name=4096x4096'
+
             count = 0
             while True:
                 try:
                     async with semaphore:
                         async with httpx.AsyncClient() as client:
                             response = await client.get(quote_url(url), timeout=(3.05, 16))        #如果出现第五次或以上的下载失败,且确认不是网络问题,可以适当降低最大并发数量
-                    with open(_file_name,'wb') as f:
+                    with open(_csv_info[6],'wb') as f:  #_csv_info[6] : Saved Path
                         f.write(response.content)
                     break
                 except Exception as e:
                     count += 1
                     print(e)
-                    print(f'{_file_name}=====>第{count}次下载失败,正在重试')
+                    print(f'{_csv_info[6]}=====>第{count}次下载失败,正在重试')
+            _csv.data_input(_csv_info)
 
         semaphore = asyncio.Semaphore(max_concurrent_requests)
-        await asyncio.gather(*[asyncio.create_task(down_save(url[0], folder_path, url[1], url[2])) for url in photo_lst])   #0:url 1:time_stamp 2:user_name
+        await asyncio.gather(*[asyncio.create_task(down_save(url[0], url[1], url[2])) for url in media_lst])   # 0:url 1:csv_info 2:is_image
 
     asyncio.run(_main())
 
 class csv_gen():
     def __init__(self, save_path:str) -> None:
-        self.f = open(f'{save_path}/{datetime.now().strftime("%Y-%m-%d %H-%M-%S")}-text.csv', 'w', encoding='utf-8-sig', newline='')
+        self.f = open(f'{save_path}/{datetime.now().strftime("%Y-%m-%d %H-%M-%S")}-{mode}.csv', 'w', encoding='utf-8-sig', newline='')
         self.writer = csv.writer(self.f)
 
         #初始化
         self.writer.writerow(['Run Time : ' + datetime.now().strftime('%Y-%m-%d %H-%M-%S')])
-        main_par = ['Tweet Date', 'Display Name', 'User Name', 'Tweet URL', 'Tweet Content', 'Favorite Count', 
-                    'Retweet Count', 'Reply Count']
+        if text_down:
+            main_par = ['Tweet Date', 'Display Name', 'User Name', 'Tweet URL', 'Tweet Content', 'Favorite Count', 
+                        'Retweet Count', 'Reply Count']
+        else:   #media格式
+            main_par = ['Tweet Date', 'Display Name', 'User Name', 'Tweet URL', 'Media Type', 'Media URL', 'Saved Path', 'Tweet Content', 'Favorite Count', 
+                        'Retweet Count', 'Reply Count']
         self.writer.writerow(main_par)
 
     def csv_close(self):
@@ -137,13 +143,15 @@ class csv_gen():
 
 class tag_down():
     def __init__(self):
-        self.folder_path = os.getcwd() + os.sep + del_special_char(tag) + os.sep
+        if tag:
+            self.folder_path = os.getcwd() + os.sep + del_special_char(tag) + os.sep
+        else:
+            self.folder_path = os.getcwd() + os.sep + del_special_char(_filter) + os.sep
 
         if not os.path.exists(self.folder_path):   #创建文件夹
             os.makedirs(self.folder_path)
 
-        if text_down:
-            self.csv = csv_gen(self.folder_path)
+        self.csv = csv_gen(self.folder_path)
 
         self._headers = {
             'user-agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36',
@@ -169,10 +177,9 @@ class tag_down():
                     media_lst = self.search_media(url)
                 if not media_lst:
                     return
-                download_control(self.folder_path, media_lst)
+                download_control(media_lst, self.csv)
 
-        if text_down:
-            self.csv.csv_close()
+        self.csv.csv_close()
 
     def search_media(self, url):
         #接收某页链接，返回该页所有图片地址
@@ -205,6 +212,7 @@ class tag_down():
         for tweet in raw_data_lst:
             tweet = tweet['item']['itemContent']['tweet_results']['result']
             try:
+                display_name = tweet['core']['user_results']['result']['legacy']['name']
                 screen_name = '@' + tweet['core']['user_results']['result']['legacy']['screen_name']
             except Exception:   #低概率事件
                 continue
@@ -216,15 +224,34 @@ class tag_down():
                 else:
                     continue
             try:
+                Favorite_Count = tweet['legacy']['favorite_count']
+                Retweet_Count = tweet['legacy']['retweet_count']
+                Reply_Count = tweet['legacy']['reply_count']
+                _status_id = tweet['legacy']['conversation_id_str']
+                tweet_url = f'https://twitter.com/{screen_name}/status/{_status_id}'
+                tweet_content = tweet['legacy']['full_text'].split('https://t.co/')[0]
+            except Exception as e:
+                print(e)
+                continue
+            try:
                 raw_media_lst = tweet['legacy']['extended_entities']['media']
                 for _media in raw_media_lst:
                     if 'video_info' in _media:
                         media_url = get_heighest_video_quality(_media['video_info']['variants'])
+                        media_type = 'Video'
+                        is_image = False
+                        _file_name = f'{self.folder_path}{stamp2time(time_stamp)}_{screen_name}_{hash_save_token(media_url)}.mp4'
                     else:
                         media_url = _media['media_url_https']
-                    media_lst.append([media_url, time_stamp, screen_name])
+                        media_type = 'Image'
+                        is_image = True
+                        _file_name = f'{self.folder_path}{stamp2time(time_stamp)}_{screen_name}_{hash_save_token(media_url)}.png'
+
+                    media_csv_info = [time_stamp, display_name, screen_name, tweet_url, media_type, media_url, _file_name, tweet_content, Favorite_Count, Retweet_Count, Reply_Count]
+                    media_lst.append([media_url, media_csv_info, is_image])
             except Exception as e:
                 print(e)
+                continue
         return media_lst
     
     def search_media_latest(self, url):
@@ -251,6 +278,7 @@ class tag_down():
                 continue
             tweet = tweet['content']['itemContent']['tweet_results']['result']
             try:
+                display_name = tweet['core']['user_results']['result']['legacy']['name']
                 screen_name = '@' + tweet['core']['user_results']['result']['legacy']['screen_name']
             except Exception:   #低概率事件
                 continue
@@ -262,13 +290,30 @@ class tag_down():
                 else:
                     continue
             try:
+                Favorite_Count = tweet['legacy']['favorite_count']
+                Retweet_Count = tweet['legacy']['retweet_count']
+                Reply_Count = tweet['legacy']['reply_count']
+                _status_id = tweet['legacy']['conversation_id_str']
+                tweet_url = f'https://twitter.com/{screen_name}/status/{_status_id}'
+                tweet_content = tweet['legacy']['full_text'].split('https://t.co/')[0]
+            except Exception as e:
+                print(e)
+                continue
+            try:
                 raw_media_lst = tweet['legacy']['extended_entities']['media']
                 for _media in raw_media_lst:
                     if 'video_info' in _media:
                         media_url = get_heighest_video_quality(_media['video_info']['variants'])
+                        media_type = 'Video'
+                        is_image = False
+                        _file_name = f'{self.folder_path}{stamp2time(time_stamp)}_{screen_name}_{hash_save_token(media_url)}.mp4'
                     else:
                         media_url = _media['media_url_https']
-                    media_lst.append([media_url, time_stamp, screen_name])
+                        media_type = 'Image'
+                        is_image = True
+                        _file_name = f'{self.folder_path}{stamp2time(time_stamp)}_{screen_name}_{hash_save_token(media_url)}.png'
+                    media_csv_info = [time_stamp, display_name, screen_name, tweet_url, media_type, media_url, _file_name, tweet_content, Favorite_Count, Retweet_Count, Reply_Count]
+                    media_lst.append([media_url, media_csv_info, is_image])
 
             except KeyError:
                 # 仍存在部分纯文本推文无法排除

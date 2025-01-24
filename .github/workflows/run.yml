@@ -24,9 +24,9 @@ jobs:
       uses: actions/cache@v3
       with:
         path: twitter/*/*.log
-        key: log-cache—${{ env.DATE_TIME }}
+        key: log-cache-${{ github.run_number }}
         restore-keys: |
-          log-cache—
+          log-cache-
     - name: Run Application
       run: |
         pip3 install -r requirements.txt && sudo apt update && sudo apt install libimage-exiftool-perl -y

@@ -33,5 +33,5 @@ jobs:
         sed -i 's/"autoSync": false/"autoSync": true/' settings.json
         sed -i 's/auth_token=xxxxxxxxxxx; ct0=xxxxxxxxxxx;/${{ secrets.cookie }}/' settings.json
         python3 main.py
-        ls -l
+        rm -rf twitter/lilmonix3/cache_data.log
         ls twitter/*/

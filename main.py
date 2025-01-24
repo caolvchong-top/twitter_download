@@ -14,6 +14,7 @@ from user_info import User_info
 from csv_gen import csv_gen
 from cache_gen import cache_gen
 from url_utils import quote_url
+from PIL import Image
 
 max_concurrent_requests = 8     #最大并发数量，默认为8，对自己网络有自信的可以调高; 遇到多次下载失败时适当降低
 
@@ -426,7 +427,7 @@ def download_control(_user_info):
 
                 print(f"已更新文件 {mp4_file_path} 的创建日期为: {extracted_date}")
             except Exception as e:
-                print(f"处理视频时出错: {mp4_file_path}, 错误信息: {e}")
+                print(f"处理视频时出错: {mp4_file_path}, 错误信息: ", e)
 
         def convert_png_to_jpeg(png_file_path):
             """
@@ -442,7 +443,7 @@ def download_control(_user_info):
                 print(f"已将 {png_file_path} 转换为 {jpeg_file_path}")
                 return jpeg_file_path
             except Exception as e:
-                print(f"转换图片时出错: {png_file_path}, 错误信息: {e}")
+                print(f"转换图片时出错: {png_file_path}, 错误信息: ", e)
                 return None
 
         while True:

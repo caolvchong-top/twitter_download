@@ -24,7 +24,9 @@ jobs:
       uses: actions/cache@v3
       with:
         path: twitter/*/*.log
-        key: log_cache
+        key: log-cache—${{ env.DATE_TIME }}
+        restore-keys: |
+          log-cache—
     - name: Run Application
       run: |
         ls -l twitter/*/
@@ -37,8 +39,3 @@ jobs:
         rm -rf twitter/lilmonix3/cache_data.log
         touch twitter/lilmonix3/cache_data.log
         ls -l twitter/*/
-    - name: Save Cache Log
-      uses: actions/cache@v3
-      with:
-        path: twitter/*/*.log
-        key: log_cache

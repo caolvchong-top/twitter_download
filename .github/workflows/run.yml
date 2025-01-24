@@ -23,7 +23,9 @@ jobs:
     - name: Install dependencies
       run: |
         pip3 install -r requirements.txt && sudo apt update && sudo apt install libimage-exiftool-perl -y
+        sed -i 's/"save_path": ""/"save_path": "twitter"/' settings.json
         sed -i 's/"down_log": false/"down_log": true/' settings.json
         sed -i 's/"autoSync": false/"autoSync": true/' settings.json
         sed -i 's/auth_token=xxxxxxxxxxx; ct0=xxxxxxxxxxx;/${{ secrets.cookie }}/' settings.json
         python3 main.py
+        ls -l

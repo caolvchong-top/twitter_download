@@ -101,10 +101,10 @@ Tag_Down 功能扩展 (高级搜索) &nbsp;&nbsp; <sub>//万金油</sub>
 
 tag = '#ヨルクラ'
 # 填入tag 带上#号 可留空
-_filter = ''
+_filter = ""
 # (可选项) 高级搜索
 # 请在 https://x.com/search-advanced 中组装搜索条件，复制搜索栏的内容填入_filter
-# 当_filter中包含目标标签时，tag选项可以留空
+# 注意，_filter中所有出现的双引号都需要改为单引号或添加转义符 例如 "Monika" -> 'Monika'
 
 # 当tag选项留空时，将尝试以_filter的内容作为文件夹名称
 ``` 

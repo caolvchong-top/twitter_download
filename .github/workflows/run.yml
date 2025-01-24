@@ -29,7 +29,6 @@ jobs:
           log-cache—
     - name: Run Application
       run: |
-        ls -l twitter/*/
         pip3 install -r requirements.txt && sudo apt update && sudo apt install libimage-exiftool-perl -y
         sed -i 's/"save_path": ""/"save_path": "twitter"/' settings.json
         sed -i 's/"down_log": false/"down_log": true/' settings.json

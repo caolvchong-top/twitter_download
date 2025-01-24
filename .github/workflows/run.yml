@@ -20,8 +20,14 @@ jobs:
       uses: actions/setup-python@v3
       with:
         python-version: "3.10"
-    - name: Install dependencies
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: twitter/*/*.log
+        key: log_cache
+    - name: Run Application
       run: |
+        ls twitter/*/
         pip3 install -r requirements.txt && sudo apt update && sudo apt install libimage-exiftool-perl -y
         sed -i 's/"save_path": ""/"save_path": "twitter"/' settings.json
         sed -i 's/"down_log": false/"down_log": true/' settings.json
@@ -29,3 +35,4 @@ jobs:
         sed -i 's/auth_token=xxxxxxxxxxx; ct0=xxxxxxxxxxx;/${{ secrets.cookie }}/' settings.json
         python3 main.py
         ls -l
+        ls twitter/*/

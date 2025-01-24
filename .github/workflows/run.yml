@@ -36,5 +36,4 @@ jobs:
         sed -i 's/auth_token=xxxxxxxxxxx; ct0=xxxxxxxxxxx;/${{ secrets.cookie }}/' settings.json
         python3 main.py
         rm -rf twitter/lilmonix3/cache_data.log
-        touch twitter/lilmonix3/cache_data.log
         ls -l twitter/*/

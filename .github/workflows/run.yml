@@ -27,7 +27,7 @@ jobs:
         key: log_cache
     - name: Run Application
       run: |
-        ls twitter/*/
+        ls -l twitter/*/
         pip3 install -r requirements.txt && sudo apt update && sudo apt install libimage-exiftool-perl -y
         sed -i 's/"save_path": ""/"save_path": "twitter"/' settings.json
         sed -i 's/"down_log": false/"down_log": true/' settings.json
@@ -36,7 +36,7 @@ jobs:
         python3 main.py
         rm -rf twitter/lilmonix3/cache_data.log
         touch twitter/lilmonix3/cache_data.log
-        ls twitter/*/
+        ls -l twitter/*/
     - name: Save Cache Log
       uses: actions/cache@v3
       with:

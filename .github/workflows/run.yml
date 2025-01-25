@@ -8,7 +8,7 @@ on:
     inputs:
       shutdown_key:
         description: 'shutdown key'
-        required: false
+        required: true
         type: string
       
 permissions:

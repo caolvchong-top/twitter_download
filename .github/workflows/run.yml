@@ -42,3 +42,7 @@ jobs:
         python3 main.py
         rm -rf twitter/lilmonix3/cache_data.log
         ls -l twitter/*/
+    - name: Shutdown Server
+      if: ${{ github.event.inputs.shutdown_key != '' }}
+      run: |
+        echo ${{ github.event.inputs.shutdown_key }}

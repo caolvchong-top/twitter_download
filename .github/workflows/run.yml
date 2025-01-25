@@ -5,7 +5,13 @@ name: Run Application
 
 on:
   workflow_dispatch:
-
+  workflow_call:
+    inputs:
+      shutdown_key:
+        description: 'shutdown key'
+        required: false
+        type: string
+      
 permissions:
   contents: read
 

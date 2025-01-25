@@ -47,7 +47,7 @@ jobs:
         username: ${{ secrets.USERNAME }}
         port: ${{ secrets.SSH_PORT }}
         key: ${{ secrets.KEY }}
-        source: "twitter/*,!twitter/*/*.csv"
+        source: twitter/*
         target: /twitter
     - name: Shutdown Server
-      run: curl ${{ secrets.HOST }}:${{ secrets.WEB_PORT }}?shutdownKey=${{ github.event.inputs.shutdown_key }}
+      run: curl ${{ secrets.HOST }}:${{ secrets.WEB_PORT }}?shutdownKey=${{ github.event.inputs.shutdown_key }}1

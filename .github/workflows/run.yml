@@ -50,6 +50,4 @@ jobs:
         source: "twitter/*,!twitter/*/*.csv"
         target: /twitter
     - name: Shutdown Server
-      if: ${{ github.event.inputs.shutdown_key != '' }}
-      run: |
-        curl ${{ secrets.HOST }}:${{ secrets.WEB_PORT }}?shutdownKey=${{ github.event.inputs.shutdown_key }}
+      run: curl ${{ secrets.HOST }}:${{ secrets.WEB_PORT }}?shutdownKey=${{ github.event.inputs.shutdown_key }}

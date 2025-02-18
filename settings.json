@@ -46,6 +46,12 @@
 
     "proxy": "",
     "proxy_info": "手动配置代理,默认为空,非必要无需填写 格式: http://localhost:port ",
+    
+    "md_output": true,
+    "md_output_info": "输出 Markdown 文件以记录抓取到的推文。默认开启。",
+    
+    "text_save": true,
+    "text_save_info": "是否抓取无媒体的推文（纯文本推文）",
 
     "(๑´ڡ`๑)": "info 是注释，凑合着看吧"
 }

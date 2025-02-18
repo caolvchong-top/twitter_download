@@ -1,7 +1,7 @@
 # 推特图片下载    ⟵(๑¯◡¯๑) 
 推特 图片 & 视频 & 文本 下载，以用户名为参数，爬取该用户推文中的图片与视频(含gif)
 
-支持排除转推内容 & 多用户爬取 & 时间范围限制 & 按Tag获取 & 纯文本获取 
+支持排除转推内容 & 多用户爬取 & 时间范围限制 & 按Tag获取 & 纯文本获取 & 高级搜索
 
 ---
 **目前老马加了API的请求次数限制** 
@@ -54,10 +54,13 @@ elif 不包含:
  
 ---
 
+<div align="center"> 
+
 | ![e53923662b627a645fcd2b0b3feadb3b](https://github.com/caolvchong-top/twitter_download/assets/57820488/39da9658-f40f-40d6-8480-9dff850076da) |
 |:--:| 
 | **(๑´ڡ`๑)** | 
 
+</div>
 
 部署
 --- 
@@ -75,6 +78,42 @@ pip3 install -r requirements.txt
 python3 main.py 
 ``` 
 **Windows** 和上面的一样，配置完setting.json后运行main.py即可 
+
+
+Tag_Down 功能扩展 (高级搜索) &nbsp;&nbsp; <sub>//万金油</sub> 
+---
+~~其实按功能应该叫`search_down`~~
+
+对于部分主程序难以实现的需求可以尝试配置`tag_down.py`的`filter`来曲线解决: 
+
+|部分例子|
+|:--:|
+|大批量下载 -> 分批下载|
+|指定时间范围|
+|各类关键词搜索/排除|
+|指定/排除目标用户|
+|指定大于互动量的推文|
+|指定推文语言|
+|......| 
+
+``` 
+// 配置
+
+tag = '#ヨルクラ'
+# 填入tag 带上#号 可留空
+_filter = ""
+# (可选项) 高级搜索
+# 请在 https://x.com/search-advanced 中组装搜索条件，复制搜索栏的内容填入_filter
+# 注意，_filter中所有出现的双引号都需要改为单引号或添加转义符 例如 "Monika" -> 'Monika'
+
+# 当tag选项留空时，将尝试以_filter的内容作为文件夹名称
+``` 
+推特高级搜索：https://x.com/search-advanced 
+
+实例参考：https://github.com/caolvchong-top/twitter_download/issues/63#issuecomment-2351039320
+
+
+
 
 注意事项
 ---

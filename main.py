@@ -256,7 +256,8 @@ def get_download_url(_user_info):
 
         return _photo_lst
 
-    print(f'已下载图片/视频:{_user_info.count}')
+    
+    print(f'已抓取推文:{_user_info.count}' if md_output else f'已下载图片/视频:{_user_info.count}')
     if has_highlights: ##2024-01-05 #适配[亮点]标签
         url_top = 'https://twitter.com/i/api/graphql/w9-i9VNm_92GYFaiyGT1NA/UserHighlightsTweets?variables={"userId":"' + _user_info.rest_id + '","count":20,'
         url_bottom = '"includePromotedContent":true,"withVoice":true}&features={"responsive_web_graphql_exclude_directive_enabled":true,"verified_phone_label_enabled":false,"creator_subscriptions_tweet_preview_api_enabled":true,"responsive_web_graphql_timeline_navigation_enabled":true,"responsive_web_graphql_skip_user_profile_image_extensions_enabled":false,"c9s_tweet_anatomy_moderator_badge_enabled":true,"tweetypie_unmention_optimization_enabled":true,"responsive_web_edit_tweet_api_enabled":true,"graphql_is_translatable_rweb_tweet_is_translatable_enabled":true,"view_counts_everywhere_api_enabled":true,"longform_notetweets_consumption_enabled":true,"responsive_web_twitter_article_tweet_consumption_enabled":false,"tweet_awards_web_tipping_enabled":false,"freedom_of_speech_not_reach_fetch_enabled":true,"standardized_nudges_misinfo":true,"tweet_with_visibility_results_prefer_gql_limited_actions_policy_enabled":true,"rweb_video_timestamps_enabled":true,"longform_notetweets_rich_text_read_enabled":true,"longform_notetweets_inline_media_enabled":true,"responsive_web_media_download_video_enabled":false,"responsive_web_enhance_cards_enabled":false}'
@@ -329,14 +330,22 @@ def get_download_url(_user_info):
 def download_control(_user_info):
     async def _main():
         async def down_save(url, prefix, csv_info, order: int):
+            global current_tweet_info
             if len(url) == 0 and text_save: # 纯文本内容
                 csv_file.data_input(csv_info)
-                fixed_timestr = csv_info[0] if type(csv_info[0]) == str else stamp2time(csv_info[0])
-                prefix_retweet = f'*{_user_info.name} retweeted*\n' if 'retweet' in prefix else ''
-                md_file.data_input(f'{prefix_retweet}{csv_info[1]} {csv_info[2]} · {fixed_timestr} [src]({csv_info[3]})')
-                md_file.data_input(csv_info[7])
-                md_file.data_input(f'{csv_info[8]} Likes, {csv_info[9]} Retweets, {csv_info[10]} Replies')
-                md_file.data_input('')
+                if md_output:
+                    fixed_timestr = csv_info[0] if type(csv_info[0]) == str else stamp2time(csv_info[0])
+                    prefix_retweet = f'*{_user_info.name} retweeted*\n' if 'retweet' in prefix else ''
+                    
+                    currentDate = csv_info[0][0:7] if type(csv_info[0]) == str else time.strftime("%Y-%m", time.localtime(csv_info[0]/1000))
+                    if not has_likes and 'retweet' not in prefix and currentDate != current_tweet_info[2]:
+                        md_file.data_input(f'## {currentDate}\n')
+                        current_tweet_info[2] = currentDate
+                    md_file.data_input('\n' + current_tweet_info[1] + '\n\n') # 输出上一个推文的互动数据
+                    md_file.data_input(f'{prefix_retweet}{csv_info[1]} {csv_info[2]} · {fixed_timestr} [src]({csv_info[3]})\n')
+                    md_file.data_input(csv_info[7])
+                    current_tweet_info[0] = csv_info[3]
+                    current_tweet_info[1] = f'{csv_info[8]} Likes, {csv_info[9]} Retweets, {csv_info[10]} Replies'
                 return True
             elif '.mp4' in url:
                 _file_name = f'{_user_info.save_path + os.sep}{prefix}_{_user_info.count + order}.mp4'
@@ -355,24 +364,20 @@ def download_control(_user_info):
             if md_output: # 在下载完毕之前先输出到 markdown，以尽可能保证高并发下载也能得到正确的推文顺序。
                 fixed_filename = csv_info[6].replace(' ', '%20')
                 fixed_timestr = csv_info[0] if type(csv_info[0]) == str else stamp2time(csv_info[0])
-                global current_tweet_info
                 if current_tweet_info[0] == csv_info[3]:
                     md_file.data_input(f'<video src="{fixed_filename}"></video>' if '.mp4' in url else f'[![]({fixed_filename})]({csv_info[5]})')
                 else:
-                    md_file.data_input(current_tweet_info[1]) # 输出上一个推文的互动数据
-                    md_file.data_input('')
+                    md_file.data_input('\n' + current_tweet_info[1] + '\n\n') # 输出上一个推文的互动数据
                     currentDate = csv_info[0][0:7] if type(csv_info[0]) == str else time.strftime("%Y-%m", time.localtime(csv_info[0]/1000))
                     if not has_likes and 'retweet' not in prefix and currentDate != current_tweet_info[2]:
-                        md_file.data_input(f'## {currentDate}')
+                        md_file.data_input(f'## {currentDate}\n')
                         current_tweet_info[2] = currentDate
+                    prefix_retweet = f'*{_user_info.name} retweeted*\n' if 'retweet' in prefix else ''
+                    md_file.data_input(f'{prefix_retweet}{csv_info[1]} {csv_info[2]} · {fixed_timestr} [src]({csv_info[3]})\n')
+                    md_file.data_input(csv_info[7] + '\n')
+                    md_file.data_input(f'<video src="{fixed_filename}"></video>' if '.mp4' in url else f'[![]({fixed_filename})]({csv_info[5]})')
                     current_tweet_info[0] = csv_info[3]
                     current_tweet_info[1] = f'{csv_info[8]} Likes, {csv_info[9]} Retweets, {csv_info[10]} Replies'
-                    prefix_retweet = f'*{_user_info.name} retweeted*\n' if 'retweet' in prefix else ''
-                    md_file.data_input(f'{prefix_retweet}{csv_info[1]} {csv_info[2]} · {fixed_timestr} [src]({csv_info[3]})')
-                    md_file.data_input(csv_info[7])
-                    md_file.data_input('')
-                    md_file.data_input(f'<video src="{fixed_filename}"></video>' if '.mp4' in url else f'[![]({fixed_filename})]({csv_info[5]})')
-                    md_file.data_input('')
 
             count = 0
             orig_fail = 0 # 0-原图下载成功 或未开启原图下载  1-JPEG 原图下载失败，尝试 PNG 原图下载  2-原图下载失败，尝试使用name=4096x4096下载
@@ -477,6 +482,7 @@ def main(_user_info: object):
     csv_file.csv_close()
     
     if md_output:
+        md_file.data_input('\n' + current_tweet_info[1] + '\n') # 输出最后一个推文的互动数据
         md_file.md_close()
 
     if down_log:

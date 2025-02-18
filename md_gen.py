@@ -17,4 +17,4 @@ class md_gen():
         return otherStyleTime
     
     def data_input(self, content) -> None:
-        self.f.write(content + '\n')
+        self.f.write(content)

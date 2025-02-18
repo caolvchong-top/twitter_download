@@ -42,7 +42,7 @@
     "log_output_info": "是否需要下载过程日志输出",
 
     "async_down": true,
-    "async_down_info": "异步下载,默认开启,网络不好时可以关闭,并发数量可在主函数16行修改",
+    "async_down_info": "异步下载,默认开启,网络不好时可以关闭,并发数量可在主函数17行修改",
 
     "proxy": "",
     "proxy_info": "手动配置代理,默认为空,非必要无需填写 格式: http://localhost:port ",

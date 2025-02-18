@@ -14,7 +14,7 @@ from md_gen import md_gen
 from cache_gen import cache_gen
 from url_utils import quote_url
 
-max_concurrent_requests = 1     #最大并发数量，默认为8，对自己网络有自信的可以调高; 遇到多次下载失败时适当降低
+max_concurrent_requests = 8     #最大并发数量，默认为8，对自己网络有自信的可以调高; 遇到多次下载失败时适当降低
 
 def del_special_char(string):
     string = re.sub(r'[^\u4e00-\u9fa5\u0030-\u0039\u0041-\u005a\u0061-\u007a\u3040-\u31FF\.]', '', string)
@@ -350,6 +350,30 @@ def download_control(_user_info):
                 except Exception as e:
                     print(url)
                     return False
+
+            csv_info[-5] = os.path.split(_file_name)[1]
+            if md_output: # 在下载完毕之前先输出到 markdown，以尽可能保证高并发下载也能得到正确的推文顺序。
+                fixed_filename = csv_info[6].replace(' ', '%20')
+                fixed_timestr = csv_info[0] if type(csv_info[0]) == str else stamp2time(csv_info[0])
+                global current_tweet_info
+                if current_tweet_info[0] == csv_info[3]:
+                    md_file.data_input(f'<video src="{fixed_filename}"></video>' if '.mp4' in url else f'[![]({fixed_filename})]({csv_info[5]})')
+                else:
+                    md_file.data_input(current_tweet_info[1]) # 输出上一个推文的互动数据
+                    md_file.data_input('')
+                    currentDate = csv_info[0][0:7] if type(csv_info[0]) == str else time.strftime("%Y-%m", time.localtime(csv_info[0]/1000))
+                    if not has_likes and 'retweet' not in prefix and currentDate != current_tweet_info[2]:
+                        md_file.data_input(f'## {currentDate}')
+                        current_tweet_info[2] = currentDate
+                    current_tweet_info[0] = csv_info[3]
+                    current_tweet_info[1] = f'{csv_info[8]} Likes, {csv_info[9]} Retweets, {csv_info[10]} Replies'
+                    prefix_retweet = f'*{_user_info.name} retweeted*\n' if 'retweet' in prefix else ''
+                    md_file.data_input(f'{prefix_retweet}{csv_info[1]} {csv_info[2]} · {fixed_timestr} [src]({csv_info[3]})')
+                    md_file.data_input(csv_info[7])
+                    md_file.data_input('')
+                    md_file.data_input(f'<video src="{fixed_filename}"></video>' if '.mp4' in url else f'[![]({fixed_filename})]({csv_info[5]})')
+                    md_file.data_input('')
+
             count = 0
             orig_fail = 0 # 0-原图下载成功 或未开启原图下载  1-JPEG 原图下载失败，尝试 PNG 原图下载  2-原图下载失败，尝试使用name=4096x4096下载
             while True:
@@ -364,30 +388,7 @@ def download_control(_user_info):
                     with open(_file_name,'wb') as f:
                         f.write(response.content)
 
-                    csv_info[-5] = os.path.split(_file_name)[1]
                     csv_file.data_input(csv_info)
-                    
-                    if md_output:
-                        fixed_filename = csv_info[6].replace(' ', '%20')
-                        fixed_timestr = csv_info[0] if type(csv_info[0]) == str else stamp2time(csv_info[0])
-                        global current_tweet_info
-                        if current_tweet_info[0] == csv_info[3]:
-                            md_file.data_input(f'<video src="{fixed_filename}"></video>' if '.mp4' in url else f'[![]({fixed_filename})]({csv_info[5]})')
-                        else:
-                            md_file.data_input(current_tweet_info[1]) # 输出上一个推文的互动数据
-                            md_file.data_input('')
-                            currentDate = csv_info[0][0:7] if type(csv_info[0]) == str else time.strftime("%Y-%m", time.localtime(csv_info[0]/1000))
-                            if not has_likes and 'retweet' not in prefix and currentDate != current_tweet_info[2]:
-                                md_file.data_input(f'## {currentDate}')
-                                current_tweet_info[2] = currentDate
-                            current_tweet_info[0] = csv_info[3]
-                            current_tweet_info[1] = f'{csv_info[8]} Likes, {csv_info[9]} Retweets, {csv_info[10]} Replies'
-                            prefix_retweet = f'*{_user_info.name} retweeted*\n' if 'retweet' in prefix else ''
-                            md_file.data_input(f'{prefix_retweet}{csv_info[1]} {csv_info[2]} · {fixed_timestr} [src]({csv_info[3]})')
-                            md_file.data_input(csv_info[7])
-                            md_file.data_input('')
-                            md_file.data_input(f'<video src="{fixed_filename}"></video>' if '.mp4' in url else f'[![]({fixed_filename})]({csv_info[5]})')
-                            md_file.data_input('')
 
                     if log_output:
                         print(f'{_file_name}=====>下载完成')

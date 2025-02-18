@@ -52,6 +52,7 @@ cache_data = None
 down_log = False
 async_down = True
 autoSync = False
+
 md_file = None
 md_output = True
 text_save = True
@@ -393,8 +394,6 @@ def download_control(_user_info):
             
                     break
                 except Exception as e:
-                    # TODO: delete
-                    # print(f"Error on line {sys.exc_info()[-1].tb_lineno}: {str(e)}")
                     if '.mp4' in url or img_format=="png" or str(e) != "404":
                         count += 1
                         print(f'{_file_name}=====>第{count}次下载失败,正在重试(多次失败时请降低main.py第16行-异步模式)')

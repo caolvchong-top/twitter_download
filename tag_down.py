@@ -31,7 +31,7 @@ media_latest = False
 
 # ------------------------ #
 
-text_down = False 
+text_down = False
 # 开启后变为文本下载模式，会消耗大量API次数
 # 开启文本下载时 不要包含 filter:links
 
@@ -160,7 +160,8 @@ class tag_down():
             url = 'https://twitter.com/i/api/graphql/tUJgNbJvuiieOXvq7OmHwA/SearchTimeline?variables={"rawQuery":"' + quote(tag + _filter) + '","count":' + str(entries_count) + ',"cursor":"' + self.cursor + '","querySource":"typed_query","product":"' + product + '"}&features={"rweb_tipjar_consumption_enabled":true,"responsive_web_graphql_exclude_directive_enabled":true,"verified_phone_label_enabled":false,"creator_subscriptions_tweet_preview_api_enabled":true,"responsive_web_graphql_timeline_navigation_enabled":true,"responsive_web_graphql_skip_user_profile_image_extensions_enabled":false,"communities_web_enable_tweet_community_results_fetch":true,"c9s_tweet_anatomy_moderator_badge_enabled":true,"articles_preview_enabled":true,"tweetypie_unmention_optimization_enabled":true,"responsive_web_edit_tweet_api_enabled":true,"graphql_is_translatable_rweb_tweet_is_translatable_enabled":true,"view_counts_everywhere_api_enabled":true,"longform_notetweets_consumption_enabled":true,"responsive_web_twitter_article_tweet_consumption_enabled":true,"tweet_awards_web_tipping_enabled":false,"creator_subscriptions_quote_tweet_preview_enabled":false,"freedom_of_speech_not_reach_fetch_enabled":true,"standardized_nudges_misinfo":true,"tweet_with_visibility_results_prefer_gql_limited_actions_policy_enabled":true,"tweet_with_visibility_results_prefer_gql_media_interstitial_enabled":true,"rweb_video_timestamps_enabled":true,"longform_notetweets_rich_text_read_enabled":true,"longform_notetweets_inline_media_enabled":true,"responsive_web_enhance_cards_enabled":false}'
             url = quote_url(url)
             if text_down:
-                self.search_save_text(url)
+                if not self.search_save_text(url):
+                    break
             else:
                 if media_latest:
                     media_lst = self.search_media_latest(url)
@@ -285,12 +286,14 @@ class tag_down():
         if not self.cursor: #第一次
             raw_data = raw_data['data']['search_by_raw_query']['search_timeline']['timeline']['instructions'][-1]['entries']
             if len(raw_data) == 2:
-                return
+                return  False
             self.cursor = raw_data[-1]['content']['value']
             raw_data_lst = raw_data[:-2]
         else:
             raw_data = raw_data['data']['search_by_raw_query']['search_timeline']['timeline']['instructions']
             self.cursor = raw_data[-1]['entry']['content']['value']
+            if len(raw_data) == 2:
+                return  False
             raw_data_lst = raw_data[0]['entries']
             
         for tweet in raw_data_lst:
@@ -324,6 +327,7 @@ class tag_down():
                 continue
 
             self.csv.data_input([time_stamp, display_name, screen_name, tweet_url, tweet_content, Favorite_Count, Retweet_Count, Reply_Count])
+        return True
 
 
 if __name__ == '__main__':

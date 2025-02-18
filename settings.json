@@ -32,8 +32,8 @@
     "autoSync": false,
     "autoSync_info": "开启后将基于本地已有的内容自动同步最新的部分, 本质上是自动调整时间范围的左半部分, 右半建议2030-01-01或更长",
 
-    "orig_format": true,
-    "orig_format_info": "开启后将依次尝试以 JPEG, PNG 格式下载原图 (name=orig) ，均下载错误后会退回使用 PNG name=4096x4096 进行下载)。关闭时则全部使用 JPEG 格式，且不超过 4K 的分辨率进行下载。",
+    "image_format": "orig",
+    "image_format_info": "可选项: orig, jpg, png; orig-(自适应原图_以推特服务器为准_大部分为jpg_少部分png), jpg-(全部以jpg格式保存), png-(全部以png格式保存_文件较大)",
 
     "has_video": true,
     "has_video_info": "是否下载推文中的视频",

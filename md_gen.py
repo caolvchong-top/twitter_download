@@ -6,7 +6,7 @@ class md_gen():
         self.f = open(f'{save_path}/{screen_name}-{datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.md', 'w', encoding='utf-8-sig', newline='')
         self.f.write(f"{user_name} {screen_name}\n")
         self.f.write(f"Tweet Range: {tweet_range}\n")
-        self.f.write(f"Save Path: {save_path}\n\n")
+        self.f.write(f"Save Path: {save_path}\n")
 
     def md_close(self):
         self.f.close()

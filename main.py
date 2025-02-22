@@ -8,6 +8,7 @@ import json
 import sys
 import piexif
 import subprocess
+import hashlib
 
 sys.path.append('.')
 from user_info import User_info
@@ -337,13 +338,13 @@ def download_control(_user_info):
 
                     # 添加拍摄日期
                     if _file_name.lower().endswith('.mp4'):
-                        modify_mp4_creation_date(_file_name)
+                        modify_mp4_creation_date(_file_name, csv_info[7])
                     elif _file_name.lower().endswith('.png'):
                         new_jpeg_file_name = convert_png_to_jpeg(_file_name)
-                        modify_image_creation_date(new_jpeg_file_name)
+                        modify_image_creation_date(new_jpeg_file_name, csv_info[7])
                         os.remove(_file_name)  # 删除原始PNG文件
                     else:
-                        modify_image_creation_date(_file_name)
+                        modify_image_creation_date(_file_name, csv_info[7])
 
                     break
                 except Exception as e:
@@ -375,7 +376,7 @@ def download_control(_user_info):
                     pass
             return None
 
-        def modify_image_creation_date(image_file_path):
+        def modify_image_creation_date(image_file_path, remark):
             """
             根据文件名修改图片的创建日期（即拍摄日期）。
             :param image_file_path: 图片文件的路径。
@@ -387,19 +388,23 @@ def download_control(_user_info):
                 return
 
             try:
+                new_name = calculate_md5(image_file_path) + os.path.splitext(image_file_path)[1]
                 exif_dict = piexif.load(image_file_path)
                 # 更新 DateTimeOriginal 和 DateTimeDigitized 字段
                 exif_dict["Exif"][piexif.ExifIFD.DateTimeOriginal] = extracted_date.strftime("%Y:%m:%d %H:%M:%S").encode("utf-8")
                 exif_dict["Exif"][piexif.ExifIFD.DateTimeDigitized] = extracted_date.strftime("%Y:%m:%d %H:%M:%S").encode("utf-8")
+                exif_dict["Exif"][piexif.ExifIFD.UserComment] = b"ASCII\x00\x00\x00" + remark.encode('utf-8')
 
                 exif_bytes = piexif.dump(exif_dict)
                 piexif.insert(exif_bytes, image_file_path)
-
-                print(f"已更新文件 {image_file_path} 的拍摄日期为: {extracted_date}")
+                print(f"已更新文件 {image_file_path} 的拍摄日期为: {extracted_date} 备注信息为: {remark}")
+                new_path = os.path.join(os.path.dirname(image_file_path), new_name)
+                os.rename(image_file_path, new_path)
+                print(f"文件已重命名为: {new_name}")
             except Exception as e:
                 print(f"处理图片时出错: {image_file_path}, 错误信息: {e}")
 
-        def modify_mp4_creation_date(mp4_file_path):
+        def modify_mp4_creation_date(mp4_file_path, remark):
             """
             根据文件名修改MP4文件的创建日期。
             :param mp4_file_path: MP4文件的路径。
@@ -411,6 +416,7 @@ def download_control(_user_info):
                 return
 
             try:
+                new_name = calculate_md5(mp4_file_path) + ".mp4"
                 mod_time = extracted_date.strftime('%Y-%m-%d %H:%M:%S %Z')
 
                 command = [
@@ -420,12 +426,15 @@ def download_control(_user_info):
                     f'-MediaModifyDate={mod_time}',  # 设置修改媒体时间
                     f'-CreateDate={mod_time}',       # 设置拍摄日期
                     f'-ModifyDate={mod_time}',       # 设置最后修改日期
+                    f'-Comment={remark}',           # 添加备注信息
                     mp4_file_path
                 ]
                 
                 result = subprocess.run(command, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
-                print(f"已更新文件 {mp4_file_path} 的创建日期为: {extracted_date}")
+                print(f"已更新文件 {mp4_file_path} 的创建日期为: {extracted_date} 备注信息为: {remark}")
+                new_path = os.path.join(os.path.dirname(mp4_file_path), new_name)
+                os.rename(mp4_file_path, new_path)
+                print(f"文件已重命名为: {new_name}")
             except Exception as e:
                 print(f"处理视频时出错: {mp4_file_path}, 错误信息: ", e)
 
@@ -445,6 +454,13 @@ def download_control(_user_info):
             except Exception as e:
                 print(f"转换图片时出错: {png_file_path}, 错误信息: ", e)
                 return None
+
+        def calculate_md5(file_path):
+            hash_md5 = hashlib.md5()
+            with open(file_path, "rb") as f:
+                for chunk in iter(lambda: f.read(4096), b""):
+                    hash_md5.update(chunk)
+            return hash_md5.hexdigest()
 
         while True:
             photo_lst = get_download_url(_user_info)

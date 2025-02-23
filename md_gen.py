@@ -27,20 +27,6 @@ class md_gen():
         timeArray = time.localtime(msecs_stamp/1000)
         otherStyleTime = time.strftime("%Y-%m-%d %H:%M", timeArray)
         return otherStyleTime
-
-    def text_tweet_input(self, csv_info, prefix) -> None:
-        fixed_timestr = csv_info[0] if type(csv_info[0]) == str else self.stamp2time(csv_info[0])
-        prefix_retweet = f'*{self.user_name} retweeted*\n' if 'retweet' in prefix else ''
-        
-        currentDate = fixed_timestr[0:7]
-        if not self.has_likes and 'retweet' not in prefix and currentDate != self.current_tweet_info[2]:
-            self.f.write(f'## {currentDate}\n')
-            self.current_tweet_info[2] = currentDate
-        self.f.write(f'\n{self.current_tweet_info[1]}\n\n' if len(self.current_tweet_info[1]) > 0 else '') # 输出上一个推文的互动数据
-        self.f.write(f'{prefix_retweet}{csv_info[1]} {csv_info[2]} · {fixed_timestr} [src]({csv_info[3]})\n')
-        self.f.write(csv_info[7])
-        self.current_tweet_info[0] = csv_info[3]
-        self.current_tweet_info[1] = f'{csv_info[8]} Likes, {csv_info[9]} Retweets, {csv_info[10]} Replies'
         
     def media_tweet_input(self, csv_info, prefix) -> None:
         fixed_filename = csv_info[6].replace(' ', '%20')

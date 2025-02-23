@@ -11,7 +11,7 @@ class csv_gen():
         self.writer.writerow([user_name, screen_name])
         self.writer.writerow(['Tweet Range : ' + tweet_range])
         self.writer.writerow(['Save Path : ' + save_path])
-        main_par = ['Tweet Date', 'Display Name', 'User Name', 'Tweet URL', 'Media Type', 'Media URL', 'Saved Filename', 'Tweet Content', 'Like Count', 
+        main_par = ['Tweet Date', 'Display Name', 'User Name', 'Tweet URL', 'Media Type', 'Media URL', 'Saved Filename', 'Tweet Content', 'Favorite Count', 
                     'Retweet Count', 'Reply Count']
         self.writer.writerow(main_par)
 

@@ -33,7 +33,7 @@
     "autoSync_info": "开启后将基于本地已有的内容自动同步最新的部分, 本质上是自动调整时间范围的左半部分, 右半建议2030-01-01或更长",
 
     "image_format": "orig",
-    "image_format_info": "可选项: orig, jpg, png; orig-(自适应原图_以推特服务器为准_大部分为jpg_少部分png), jpg-(全部以jpg格式保存), png-(全部以png格式保存_文件较大)",
+    "image_format_info": "可选项: orig, jpg, png; orig-(推荐使用_自适应原图_以推特服务器为准_大部分为jpg_少部分png), jpg-(全部以jpg格式保存), png-(全部以png格式保存_文件较大)",
 
     "has_video": true,
     "has_video_info": "是否下载推文中的视频",
@@ -42,10 +42,17 @@
     "log_output_info": "是否需要下载过程日志输出",
 
     "async_down": true,
-    "async_down_info": "异步下载,默认开启,网络不好时可以关闭,并发数量可在主函数16行修改",
+    "async_down_info": "异步下载,默认开启,网络不好时可以关闭,并发数量可在主函数17行修改",
 
     "proxy": "",
     "proxy_info": "手动配置代理,默认为空,非必要无需填写 格式: http://localhost:port ",
+    
+    "md_output": true,
+    "md_output_info": "输出 Markdown 文件以记录抓取到的推文。默认开启。",
+    
+    "media_count_limit": 350,
+    "media_count_limit_info": "限制单个 Markdown 文件中包含媒体的数量，避免内存爆炸。默认为 350，配置较差的可以适当降低，填 0 则不限制(所有媒体标签输出到一个文件中)。",
+    "media_count_limit_info_2": "输出文件名格式为：用户名-文件生成日期_文件计数_文件第一条推文的年月日期。为保证不分割单个推文，单个文件中可能会多出 1~3 个媒体标签。",
 
     "(๑´ڡ`๑)": "info 是注释，凑合着看吧"
 }

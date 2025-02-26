@@ -1,4 +1,5 @@
 import time
+import re
 from datetime import datetime
 
 class md_gen():
@@ -15,12 +16,12 @@ class md_gen():
         self.has_likes = has_likes
         
         self.media_count_limit = media_count_limit # 从配置文件中读取到的 单个 Markdown 最大媒体数量。
-        self.current_tweet_info = ['', '', ''] # 生成 md 时使用，用于合并多个媒体到一个推文和生成日期标题。0-当前推文的url, 1-当前推文互动数据(md文本), 2-当前推文年月日期(不含转推，获取likes时也不使用)
+        self.current_tweet_info = ['', '', ''] # 生成 md 时使用，用于合并多个媒体到一个推文和生成日期标题。0-当前推文的 status id, 1-当前推文互动数据(md文本), 2-当前推文年月日期(不含转推，获取likes时也不使用)
         self.file_media_count = 0 # 当前文件中的媒体数量
         self.file_count = 1 # 已输出的文件数量
 
     def md_close(self):
-        self.f.data_input('\n' + self.current_tweet_info[1] + '\n') # 输出最后一个推文的互动数据
+        self.f.write('\n' + self.current_tweet_info[1] + '\n') # 输出最后一个推文的互动数据
         self.f.close()
 
     def stamp2time(self, msecs_stamp:int) -> str:
@@ -32,8 +33,11 @@ class md_gen():
         fixed_filename = csv_info[6].replace(' ', '%20')
         fixed_timestr = csv_info[0] if type(csv_info[0]) == str else self.stamp2time(csv_info[0])
         currentDate = fixed_timestr[0:7]
+        
+        tweet_status_id = re.findall("status/(\d+)", csv_info[3])[0]
+        print(tweet_status_id)
 
-        if self.current_tweet_info[0] != csv_info[3]: # 检测到现在正准备输出新的推文
+        if self.current_tweet_info[0] != tweet_status_id: # 检测到现在正准备输出新的推文
             self.f.write(f'\n{self.current_tweet_info[1]}\n\n' if len(self.current_tweet_info[1]) > 0 else '') # 输出上一个推文的互动数据
             
             if self.media_count_limit > 0 and self.file_media_count >= self.media_count_limit: # 超出媒体限制，新建文件
@@ -58,7 +62,7 @@ class md_gen():
             prefix_retweet = f'*{self.user_name} retweeted*\n' if 'retweet' in prefix else '' # 转推注释
             self.f.write(f'{prefix_retweet}{csv_info[1]} {csv_info[2]} · {fixed_timestr} [src]({csv_info[3]})\n') # 推文用户名与昵称
             self.f.write(csv_info[7] + '\n') # 推文文本信息
-            self.current_tweet_info[0] = csv_info[3]
+            self.current_tweet_info[0] = tweet_status_id
             self.current_tweet_info[1] = f'{csv_info[8]} Likes, {csv_info[9]} Retweets, {csv_info[10]} Replies'
         
         self.f.write(f'<video src="{fixed_filename}" controls></video>' if 'Video' in csv_info[4] else f'[![]({fixed_filename})]({csv_info[5]})') # 输出当前推文的媒体标签(其中一张)

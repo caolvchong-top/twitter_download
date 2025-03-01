@@ -13,8 +13,6 @@ from csv_gen import csv_gen
 from cache_gen import cache_gen
 from url_utils import quote_url
 
-max_concurrent_requests = 8     #最大并发数量，默认为8，对自己网络有自信的可以调高; 遇到多次下载失败时适当降低
-
 def del_special_char(string):
     string = re.sub(r'[^\u4e00-\u9fa5\u0030-\u0039\u0041-\u005a\u0061-\u007a\u3040-\u31FF\.]', '', string)
     return string
@@ -49,7 +47,6 @@ has_video = False
 csv_file = None
 cache_data = None
 down_log = False
-async_down = True
 autoSync = False
 
 
@@ -86,8 +83,10 @@ with open('settings.json', 'r', encoding='utf8') as f:
         has_video = True
     if settings['log_output']:
         log_output = True
-    if not settings['async_down']:
-        async_down = False
+    if settings['max_concurrent_requests']:
+        max_concurrent_requests = settings['max_concurrent_requests']
+    else:
+        max_concurrent_requests = 8
 ###### proxy ######
     if settings['proxy']:
         proxies = settings['proxy']
@@ -356,15 +355,11 @@ def download_control(_user_info):
                 break
             elif photo_lst[0] == True:
                 continue
-            if async_down:
-                semaphore = asyncio.Semaphore(max_concurrent_requests)    #最大并发数量，默认为8，对自己网络有自信的可以调高
-                if down_log:
-                    await asyncio.gather(*[asyncio.create_task(down_save(url[0], url[1], url[2], order)) for order,url in enumerate(photo_lst) if cache_data.is_present(url[0])])
-                else:
-                    await asyncio.gather(*[asyncio.create_task(down_save(url[0], url[1], url[2], order)) for order,url in enumerate(photo_lst)])
+            semaphore = asyncio.Semaphore(max_concurrent_requests)    #最大并发数量，默认为8，对自己网络有自信的可以调高
+            if down_log:
+                await asyncio.gather(*[asyncio.create_task(down_save(url[0], url[1], url[2], order)) for order,url in enumerate(photo_lst) if cache_data.is_present(url[0])])
             else:
-                for order,url in enumerate(photo_lst):
-                    await down_save(url[0], url[1], url[2], order)
+                await asyncio.gather(*[asyncio.create_task(down_save(url[0], url[1], url[2], order)) for order,url in enumerate(photo_lst)])
             _user_info.count += len(photo_lst)      #更新计数
 
     asyncio.run(_main())

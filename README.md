@@ -140,12 +140,17 @@ _filter = ""
 
 ![20230720134253](https://github.com/caolvchong-top/twitter_download/assets/57820488/6e5ba42f-2dc4-4fa1-8cf6-152246378756)
 
+
+**评论区下载 Reply_down.py** 
+
+![asehniubnsiebfi](https://github.com/user-attachments/assets/43708c8f-528d-4000-bf45-409a53ee3bc7)
+
  
-**按Tag获取(仅媒体文件)** 
+**按Tag获取 Tag_down.py** 
 
 ![image](https://github.com/caolvchong-top/twitter_download/assets/57820488/aa109e18-5ef1-4d77-902c-658ed1b3ff53)
 
-**纯文本推文获取(仅文本)** 
+**纯文本推文获取(仅文本) Text_down.py** 
 
 ![QQ截图20240511032859](https://github.com/caolvchong-top/twitter_download/assets/57820488/0998b6b1-c313-4b1d-a78e-525a666098b2)
 

@@ -35,7 +35,7 @@ class md_gen():
         currentDate = fixed_timestr[0:7]
         
         tweet_status_id = re.findall("status/(\d+)", csv_info[3])[0]
-        print(tweet_status_id)
+        # print(tweet_status_id)
 
         if self.current_tweet_info[0] != tweet_status_id: # 检测到现在正准备输出新的推文
             self.f.write(f'\n{self.current_tweet_info[1]}\n\n' if len(self.current_tweet_info[1]) > 0 else '') # 输出上一个推文的互动数据

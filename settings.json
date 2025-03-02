@@ -47,12 +47,12 @@
     "proxy": "",
     "proxy_info": "手动配置代理,默认为空,非必要无需填写 格式: http://localhost:port ",
     
-    "md_output": true,
-    "md_output_info": "输出 Markdown 文件以记录抓取到的推文。默认开启。",
+    "md_output": false,
+    "md_output_info": "开启后输出 Markdown 文件以记录获取到的推文 (不影响csv生成)",
     
     "media_count_limit": 350,
-    "media_count_limit_info": "限制单个 Markdown 文件中包含媒体的数量，避免内存爆炸。默认为 350，配置较差的可以适当降低，填 0 则不限制(所有媒体标签输出到一个文件中)。",
-    "media_count_limit_info_2": "输出文件名格式为：用户名-文件生成日期_文件计数_文件第一条推文的年月日期。为保证不分割单个推文，单个文件中可能会多出 1~3 个媒体标签。",
+    "media_count_limit_info": "限制单个md文件中包含媒体链接的数量, 默认为 350, 建议使用vscode等动态加载工具打开, 填 0 则不限制",
+    "media_count_limit_info_2": "输出格式为：用户名-文件生成日期_文件计数_文件第一条推文的年月日期",
 
     "(๑´ڡ`๑)": "info 是注释，凑合着看吧"
 }

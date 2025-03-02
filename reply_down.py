@@ -186,7 +186,9 @@ class Reply_down():
                 self.user_name = self.target.split('@')[-1]
                 if time_range:
                     self.since_time, self.until_time = time_range.split(':')
-            self.querystring = f"(from:{self.user_name}) min_replies:{min_replies} min_faves:{min_faves} min_retweets:{min_retweets} until:{self.until_time} since:{self.since_time}"
+                    self.querystring = f"(from:{self.user_name}) min_replies:{min_replies} min_faves:{min_faves} min_retweets:{min_retweets} until:{self.until_time} since:{self.since_time}"
+                else:
+                    self.querystring = f"(from:{self.user_name}) min_replies:{min_replies} min_faves:{min_faves} min_retweets:{min_retweets}"
             return True
 
     def get_result(self):

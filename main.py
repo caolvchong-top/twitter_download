@@ -367,7 +367,7 @@ def download_control(_user_info):
                             print(f'{_file_name}=====>第{count}次下载失败，已跳过该文件。')
                             print(url)
                             break
-                        print(f'{_file_name}=====>第{count}次下载失败,正在重试(多次失败时请降低main.py第17行-异步模式)')
+                        print(f'{_file_name}=====>第{count}次下载失败,正在重试')
                         print(url)
                     else:
                         url = url.replace('name=orig', 'name=4096x4096')

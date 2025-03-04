@@ -1,5 +1,6 @@
 import httpx
 
+import asyncio
 import re
 import os
 import csv
@@ -8,6 +9,9 @@ import json
 from datetime import datetime
 from urllib.parse import quote
 from url_utils import quote_url
+from tag_down import get_heighest_video_quality
+from tag_down import hash_save_token
+from tag_down import stamp2time
 
 ##########配置区域##########
 
@@ -24,10 +28,14 @@ target_user = [
 # 当目标为用户时, 在根目录下生成用户名文件夹.
 
 # csv文件命名格式: ./{Tweet_ID or User_Name}/{datetime.now}-Reply.csv
+# 媒体文件命名格式: ./{Tweet_ID or User_Name}/{reply_date}_{replier_user_name}_{md5(media_url)[:4]}_reply.{mp4/png}
 
 
 time_range = "2024-02-06:2024-08-06"
 # 限定时间范围, 指定用户时生效, 格式如2023-02-01:2024-05-06, 不填留空则默认无限制.
+
+media_down = True
+# 开启后将同时下载评论内容中的媒体文件.
 
 # ------------------------ #
 
@@ -37,7 +45,7 @@ def del_special_char(string):
 
 class csv_gen():
     def __init__(self, save_path:str) -> None:
-        self.f = open(f'{save_path}/{datetime.now().strftime("%Y-%m-%d %H-%M-%S")}-Reply.csv', 'w', encoding='utf-8-sig', newline='')
+        self.f = open(f'{save_path}{datetime.now().strftime("%Y-%m-%d %H-%M-%S")}-Reply.csv', 'w', encoding='utf-8-sig', newline='')
         self.writer = csv.writer(self.f)
 
         #初始化
@@ -60,9 +68,40 @@ class csv_gen():
         main_par_info[3] = self.stamp2time(main_par_info[3])    #传进来的是 int 时间戳, 故转换一下
         self.writer.writerow(main_par_info)
 
+def download_control(media_lst):
+    async def _main():
+        async def down_save(url, _file_name, is_image):
+            if is_image:
+                url += '?format=png&name=4096x4096'
+
+            count = 0
+            while True:  #下载失败重试次数
+                try:
+                    async with semaphore:
+                        async with httpx.AsyncClient() as client:
+                            response = await client.get(quote_url(url), timeout=(3.05, 16))        #如果出现第五次或以上的下载失败,且确认不是网络问题,可以适当降低最大并发数量
+                    with open(_file_name,'wb') as f:
+                        f.write(response.content)
+                    break
+                except Exception as e:
+                    if count >= 50:
+                        print(f'{url}=====>第{count}次下载失败,已跳过')
+                        break
+                    count += 1
+                    print(e)
+                    print(f'{url}=====>第{count}次下载失败,正在重试')
+
+        semaphore = asyncio.Semaphore(max_concurrent_requests)
+        await asyncio.gather(*[asyncio.create_task(down_save(url[0], url[1], url[2])) for url in media_lst])   # 0:url 1:_file_name 2:is_image
+
+    asyncio.run(_main())
+
 
 ##########高级配置区域##########
 # 如无特殊需要 请勿修改
+
+max_concurrent_requests = 8
+# 最大并发数量, 默认为8, 对网络有自信的可以调高; 遇到多次下载失败时适当降低.
 
 min_replies = 1
 # 筛选最小回复数, 只获取大于该数值的推文的评论区.
@@ -98,14 +137,14 @@ class Reply_down():
         self.cursor = ''
 
         if self.get_querystring():  #指定用户
-            self.folder_path = os.getcwd() + os.sep + del_special_char(self.user_name)
+            self.folder_path = os.getcwd() + os.sep + del_special_char(self.user_name) + os.sep
             if not os.path.exists(self.folder_path):   #创建文件夹
                 os.makedirs(self.folder_path)
             self.csv = csv_gen(self.folder_path)
             self.get_result()
 
         else:   #指定推文
-            self.folder_path = os.getcwd() + os.sep + del_special_char(self.tweet_id)
+            self.folder_path = os.getcwd() + os.sep + del_special_char(self.tweet_id) + os.sep
             if not os.path.exists(self.folder_path):   #创建文件夹
                 os.makedirs(self.folder_path)
             self.csv = csv_gen(self.folder_path)
@@ -115,9 +154,10 @@ class Reply_down():
 
     def id2reply(self, tweet_id:str):
         _cursor = ''
+        media_lst = []
         is_completed = False
         while not is_completed:
-            url = 'https://x.com/i/api/graphql/Ez6kRPyXbqNlhBwcNMpU-Q/TweetDetail?variables={"focalTweetId":"' + tweet_id + '","cursor":"' + _cursor + '","referrer":"tweet","with_rux_injections":false,"rankingMode":"Recency","includePromotedContent":true,"withCommunity":true,"withQuickPromoteEligibilityTweetFields":true,"withBirdwatchNotes":true,"withVoice":true}&features={"profile_label_improvements_pcf_label_in_post_enabled":true,"rweb_tipjar_consumption_enabled":true,"responsive_web_graphql_exclude_directive_enabled":true,"verified_phone_label_enabled":false,"creator_subscriptions_tweet_preview_api_enabled":true,"responsive_web_graphql_timeline_navigation_enabled":true,"responsive_web_graphql_skip_user_profile_image_extensions_enabled":false,"premium_content_api_read_enabled":false,"communities_web_enable_tweet_community_results_fetch":true,"c9s_tweet_anatomy_moderator_badge_enabled":true,"responsive_web_grok_analyze_button_fetch_trends_enabled":false,"responsive_web_grok_analyze_post_followups_enabled":true,"responsive_web_jetfuel_frame":false,"responsive_web_grok_share_attachment_enabled":true,"articles_preview_enabled":true,"responsive_web_edit_tweet_api_enabled":true,"graphql_is_translatable_rweb_tweet_is_translatable_enabled":true,"view_counts_everywhere_api_enabled":true,"longform_notetweets_consumption_enabled":true,"responsive_web_twitter_article_tweet_consumption_enabled":true,"tweet_awards_web_tipping_enabled":false,"responsive_web_grok_analysis_button_from_backend":false,"creator_subscriptions_quote_tweet_preview_enabled":false,"freedom_of_speech_not_reach_fetch_enabled":true,"standardized_nudges_misinfo":true,"tweet_with_visibility_results_prefer_gql_limited_actions_policy_enabled":true,"rweb_video_timestamps_enabled":true,"longform_notetweets_rich_text_read_enabled":true,"longform_notetweets_inline_media_enabled":true,"responsive_web_grok_image_annotation_enabled":true,"responsive_web_enhance_cards_enabled":false}'
+            url = 'https://x.com/i/api/graphql/Ez6kRPyXbqNlhBwcNMpU-Q/TweetDetail?variables={"focalTweetId":"' + tweet_id + '","cursor":"' + _cursor + '","referrer":"tweet","with_rux_injections":false,"rankingMode":"Recency","includePromotedContent":false,"withCommunity":true,"withQuickPromoteEligibilityTweetFields":true,"withBirdwatchNotes":true,"withVoice":true}&features={"profile_label_improvements_pcf_label_in_post_enabled":true,"rweb_tipjar_consumption_enabled":true,"responsive_web_graphql_exclude_directive_enabled":true,"verified_phone_label_enabled":false,"creator_subscriptions_tweet_preview_api_enabled":true,"responsive_web_graphql_timeline_navigation_enabled":true,"responsive_web_graphql_skip_user_profile_image_extensions_enabled":false,"premium_content_api_read_enabled":false,"communities_web_enable_tweet_community_results_fetch":true,"c9s_tweet_anatomy_moderator_badge_enabled":true,"responsive_web_grok_analyze_button_fetch_trends_enabled":false,"responsive_web_grok_analyze_post_followups_enabled":true,"responsive_web_jetfuel_frame":false,"responsive_web_grok_share_attachment_enabled":true,"articles_preview_enabled":true,"responsive_web_edit_tweet_api_enabled":true,"graphql_is_translatable_rweb_tweet_is_translatable_enabled":true,"view_counts_everywhere_api_enabled":true,"longform_notetweets_consumption_enabled":true,"responsive_web_twitter_article_tweet_consumption_enabled":true,"tweet_awards_web_tipping_enabled":false,"responsive_web_grok_analysis_button_from_backend":false,"creator_subscriptions_quote_tweet_preview_enabled":false,"freedom_of_speech_not_reach_fetch_enabled":true,"standardized_nudges_misinfo":true,"tweet_with_visibility_results_prefer_gql_limited_actions_policy_enabled":true,"rweb_video_timestamps_enabled":true,"longform_notetweets_rich_text_read_enabled":true,"longform_notetweets_inline_media_enabled":true,"responsive_web_grok_image_annotation_enabled":true,"responsive_web_enhance_cards_enabled":false}'
             url = quote_url(url)
             response = httpx.get(url, headers=self._headers).text
             try:
@@ -158,20 +198,42 @@ class Reply_down():
 
                         parent_tweet_url = f'https://x.com/{self.user_name}/status/{tweet_id}'
                         replier_display_name = _reply['core']['user_results']['result']['legacy']['name']
-                        replier_user_name = _reply['core']['user_results']['result']['legacy']['screen_name']
+                        replier_user_name = '@' + _reply['core']['user_results']['result']['legacy']['screen_name']
                         reply_date = time_stamp
                         reply_content = _reply['legacy']['full_text']
                         reply_url = f'https://x.com/{replier_user_name}/status/{_reply["legacy"]["id_str"]}'
                         reply_favorite_count = _reply['legacy']['favorite_count']
                         reply_retweet_count = _reply['legacy']['retweet_count']
                         reply_reply_count = _reply['legacy']['reply_count']
-
-                        _csv_info = [parent_tweet_url, replier_display_name, replier_user_name, reply_date, reply_content, reply_url, reply_favorite_count, reply_retweet_count, reply_reply_count]
-                        self.csv.data_input(_csv_info)
-                    
+                    else:
+                        continue
                 except Exception as e:
                     print(e)
                     continue
+
+                if media_down and 'extended_entities' in _reply['legacy']:
+                    try:
+                        raw_media_lst = _reply['legacy']['extended_entities']['media']
+                        for _media in raw_media_lst:
+                            if 'video_info' in _media:
+                                media_url = get_heighest_video_quality(_media['video_info']['variants'])
+                                is_image = False
+                                _file_name = f'{self.folder_path}{stamp2time(time_stamp)}_{replier_user_name}_{hash_save_token(media_url)}_reply.mp4'
+                            else:
+                                media_url = _media['media_url_https']
+                                is_image = True
+                                _file_name = f'{self.folder_path}{stamp2time(time_stamp)}_{replier_user_name}_{hash_save_token(media_url)}_reply.png'
+
+                            media_lst.append([media_url, _file_name, is_image])
+                    except Exception as e:
+                        print(e)
+
+                _csv_info = [parent_tweet_url, replier_display_name, replier_user_name, reply_date, reply_content, reply_url, reply_favorite_count, reply_retweet_count, reply_reply_count]
+                self.csv.data_input(_csv_info)
+
+                if media_lst:
+                    download_control(media_lst)
+                    
 
 
     def get_querystring(self):

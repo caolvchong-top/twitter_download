@@ -145,7 +145,7 @@ def print_info(_user_info):
     print(
         f'''
         <======基本信息=====>
-        昵称:{_user_info.name}
+        昵称:{_user_info.name.encode('utf-8', errors='replace').decode('utf-8')}
         用户名:{_user_info.screen_name}
         数字ID:{_user_info.rest_id}
         总推数(含转推):{_user_info.statuses_count}

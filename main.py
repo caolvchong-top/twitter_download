@@ -135,8 +135,9 @@ def get_other_info(_user_info):
         _user_info.name = raw_data['data']['user']['result']['legacy']['name']
         _user_info.statuses_count = raw_data['data']['user']['result']['legacy']['statuses_count']
         _user_info.media_count = raw_data['data']['user']['result']['legacy']['media_count']
-    except Exception:
+    except Exception as e:
         print('获取信息失败')
+        print(e)
         print(response)
         return False
     return True

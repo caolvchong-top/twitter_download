@@ -18,6 +18,13 @@ elif 不包含:
 ```
 
 # Change Log 
+* **2025-04-26** 
+  * 替换部分失效接口 
+  * `tag_down reply_down`增加`X-Client-Transaction-ID`校验, 请重新运行`pip install -r requirements.txt`安装依赖 
+  * // 目前生成的`transaction-id`仍有小概率失效, 当程序抛出`获取数据失败`时可以尝试重新运行 
+  * 目前`main text_down`似乎未受`X-Client-Transaction-ID`校验影响 
+  * Reference: `https://github.com/iSarabjitDhiman/XClientTransaction`
+
 * **2025-03-03** 
   * 支持下载评论区(指定用户或推文链接)--**请直接配置reply_down.py文件并运行**
 

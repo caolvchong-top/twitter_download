@@ -216,7 +216,7 @@ def get_download_url(_user_info):
                             full_text = a['retweeted_status_result']['result']['legacy']['full_text']
                             id_str = a['retweeted_status_result']['result']['legacy']['id_str']
                             
-                            if 'extended_entities' in a['retweeted_status_result']['result']['legacy']:
+                            if 'extended_entities' in a['retweeted_status_result']['result']['legacy'] and screen_name != _user_info.screen_name:
                                 _photo_lst += [(get_heighest_video_quality(_media['video_info']['variants']), f'{timestr}-vid-retweet', [tweet_msecs, name, f"@{screen_name}", _media['expanded_url'], 'Video', get_heighest_video_quality(_media['video_info']['variants']), '', full_text] + frr) if 'video_info' in _media and has_video else (_media['media_url_https'], f'{timestr}-img-retweet', [tweet_msecs, name, f"@{screen_name}", _media['expanded_url'], 'Image', _media['media_url_https'], '', full_text] + frr) for _media in a['retweeted_status_result']['result']['legacy']['extended_entities']['media']]
 
                     elif not _result[1]:    #已超出目标时间范围

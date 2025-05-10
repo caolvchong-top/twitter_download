@@ -201,7 +201,10 @@ class text_down():
                     _status_id = raw_text['legacy']['conversation_id_str']
                     screen_name = raw_text['core']['user_results']['result']['legacy']['screen_name']
                     _tweet_url = f'https://twitter.com/{screen_name}/status/{_status_id}'
-                    _tweet_content = raw_text['legacy']['full_text'].split('https://t.co/')[0]
+                    if 'note_tweet' in raw_text:
+                        _tweet_content = raw_text['note_tweet']['note_tweet_results']['result']['text'].split('https://t.co/')[0]
+                    else:
+                        _tweet_content = raw_text['legacy']['full_text'].split('https://t.co/')[0]
 
                     self.csv_file.data_input([_display_name, _screen_name, _time_stamp, _tweet_url, _tweet_content, _Favorite_Count, _Retweet_Count, _Reply_Count])
 

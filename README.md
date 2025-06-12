@@ -80,7 +80,8 @@ elif 不包含:
 git clone https://github.com/caolvchong-top/twitter_download.git 
 cd twitter_download 
 pip3 install -r requirements.txt
-#Python版本须>=3.8
+
+#Python版本须>=3.8  httpx==0.28.1
 ``` 
 **运行** : 
 ``` 

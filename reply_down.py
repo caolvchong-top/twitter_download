@@ -176,25 +176,30 @@ class Reply_down():
                 print(response)
                 return
             
-            raw_data = raw_data['data']['threaded_conversation_with_injections_v2']['instructions'][0]['entries']
+            raw_data_backup = raw_data
             if not _cursor: #第一页第一条默认为父推文
-                if len(raw_data) == 1:
+                raw_data = raw_data['data']['threaded_conversation_with_injections_v2']['instructions'][1]['entries']
+                if len(raw_data) == 2:
                     return
                 raw_data.pop(0)
+            else:
+                raw_data = raw_data['data']['threaded_conversation_with_injections_v2']['instructions'][0]['entries']
 
-            if 'cursor-' not in raw_data[-1]['entryId']:
+            if 'direction' in raw_data_backup['data']['threaded_conversation_with_injections_v2']['instructions'][-1] and raw_data_backup['data']['threaded_conversation_with_injections_v2']['instructions'][-1]['direction'] == 'Bottom':
                 is_completed = True
             else:
-                _cursor = raw_data[-1]['content']['itemContent']['value']
+                _cursor = raw_data[-1]['content']['value']
 
             for _reply in raw_data:
                 try:
                     if 'conversationthread' in _reply['entryId']:
+                        if not _reply['content']['items']:
+                            continue
                         _reply = _reply['content']['items'][0]
                         if 'conversationthread' not in _reply['entryId']:
                             continue
                         _reply = _reply['item']['itemContent']['tweet_results']['result']
-                        
+
                         if 'editable_until_msecs' in _reply['edit_control']:
                             time_stamp = int(_reply['edit_control']['editable_until_msecs']) - 3600000
                         elif 'edit_control_initial' in _reply['edit_control'] and 'editable_until_msecs' in _reply['edit_control']['edit_control_initial']:
@@ -213,6 +218,7 @@ class Reply_down():
                         reply_reply_count = _reply['legacy']['reply_count']
                     else:
                         continue
+
                 except Exception as e:
                     print(e)
                     continue

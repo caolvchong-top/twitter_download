@@ -18,6 +18,9 @@ elif 不包含:
 ```
 
 # Change Log 
+* **2025-08-09** 
+  * 支持获取用户主页内容(头像&banner&简介)--**请直接配置profile_down.py文件并运行**
+
 * **2025-04-26** 
   * 替换部分失效接口 
   * `tag_down reply_down`增加`X-Client-Transaction-ID`校验, 请重新运行`pip install -r requirements.txt`安装依赖 

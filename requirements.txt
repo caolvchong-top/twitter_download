@@ -1,2 +1,2 @@
 httpx==0.28.1
-XClientTransaction
+XClientTransaction==1.0.1

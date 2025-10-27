@@ -138,7 +138,7 @@ _filter = ""
 ``` 
 推特高级搜索：https://x.com/search-advanced 
 
-实例参考：https://github.com/caolvchong-top/twitter_download/issues/63#issuecomment-2351039320
+实例参考：https://github.com/caolvchong-top/twitter_download/issues/63#issuecomment-2351039320 & https://github.com/caolvchong-top/twitter_download/issues/106
 
 
 效果预览

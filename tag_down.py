@@ -233,7 +233,7 @@ class tag_down():
                 Favorite_Count = tweet['legacy']['favorite_count']
                 Retweet_Count = tweet['legacy']['retweet_count']
                 Reply_Count = tweet['legacy']['reply_count']
-                _status_id = tweet['legacy']['conversation_id_str']
+                _status_id = tweet['rest_id']
                 tweet_url = f'https://twitter.com/{screen_name}/status/{_status_id}'
                 tweet_content = tweet['legacy']['full_text'].split('https://t.co/')[0]
             except Exception as e:
@@ -299,7 +299,7 @@ class tag_down():
                 Favorite_Count = tweet['legacy']['favorite_count']
                 Retweet_Count = tweet['legacy']['retweet_count']
                 Reply_Count = tweet['legacy']['reply_count']
-                _status_id = tweet['legacy']['conversation_id_str']
+                _status_id = tweet['rest_id']
                 tweet_url = f'https://twitter.com/{screen_name}/status/{_status_id}'
                 tweet_content = tweet['legacy']['full_text'].split('https://t.co/')[0]
             except Exception as e:
@@ -370,7 +370,7 @@ class tag_down():
                 Favorite_Count = tweet['legacy']['favorite_count']
                 Retweet_Count = tweet['legacy']['retweet_count']
                 Reply_Count = tweet['legacy']['reply_count']
-                _status_id = tweet['legacy']['conversation_id_str']
+                _status_id = tweet['rest_id']
                 tweet_url = f'https://twitter.com/{screen_name}/status/{_status_id}'
                 tweet_content = tweet['legacy']['full_text'].split('https://t.co/')[0]
             except Exception as e:

@@ -235,7 +235,8 @@ class tag_down():
                 Reply_Count = tweet['legacy']['reply_count']
                 _status_id = tweet['rest_id']
                 tweet_url = f'https://twitter.com/{screen_name}/status/{_status_id}'
-                tweet_content = tweet['legacy']['full_text'].split('https://t.co/')[0]
+                __text_content = tweet['legacy']['full_text'] 
+                tweet_content = re.sub(r'https?://t\.co/\w+\s*$', '', __text_content).strip()
             except Exception as e:
                 print(e)
                 continue
@@ -301,7 +302,8 @@ class tag_down():
                 Reply_Count = tweet['legacy']['reply_count']
                 _status_id = tweet['rest_id']
                 tweet_url = f'https://twitter.com/{screen_name}/status/{_status_id}'
-                tweet_content = tweet['legacy']['full_text'].split('https://t.co/')[0]
+                __text_content = tweet['legacy']['full_text'] 
+                tweet_content = re.sub(r'https?://t\.co/\w+\s*$', '', __text_content).strip()
             except Exception as e:
                 print(e)
                 continue
@@ -372,7 +374,8 @@ class tag_down():
                 Reply_Count = tweet['legacy']['reply_count']
                 _status_id = tweet['rest_id']
                 tweet_url = f'https://twitter.com/{screen_name}/status/{_status_id}'
-                tweet_content = tweet['legacy']['full_text'].split('https://t.co/')[0]
+                __text_content = tweet['legacy']['full_text'] 
+                tweet_content = re.sub(r'https?://t\.co/\w+\s*$', '', __text_content).strip()
             except Exception as e:
                 print(e)
                 continue

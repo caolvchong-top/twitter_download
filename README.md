@@ -12,7 +12,7 @@
 > 
 > 2. The intellectual property of all media content (images, videos, etc.) downloaded using this tool belongs to the original authors and the respective platforms. Please respect relevant copyrights.
 > 
-> 3. Users must comply with local laws and regulations, as well as the target platform's Terms of Service (ToS). It is strictly prohibited to use this tool and the obtained data for commercial profit, malicious scraping, or illegal distribution.
+> 3. Users must comply with applicable laws, the target platform's Terms of Service, and relevant copyright regulations. Do not use this tool for malicious scraping, copyright infringement, illegal distribution, or other unlawful activities.
 > 
 > 4. The developer assumes no responsibility for any violations, legal disputes, or direct/indirect losses caused by the improper use of this tool. Use at your own risk.
 > 
@@ -25,7 +25,7 @@
 > 
 > 2. 使用本工具下载的所有媒体内容（图片、视频等）的知识产权均归原作者及所属平台所有，请尊重相关版权。
 > 
-> 3. 使用者须遵守当地法律法规及目标平台的服务条款（ToS）。严禁将本工具及所获取的数据用于商业盈利、恶意抓取或非法传播用途。
+> 3. 请勿将本工具及所获取的数据用于恶意抓取、侵权传播或其他违法用途。
 > 
 > 4. 开发者不对任何因不当使用本工具而导致的违规行为、法律纠纷或直接/间接损失承担责任。请风险自担。
 > 

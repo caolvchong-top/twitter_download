@@ -1,0 +1,24 @@
+# Cookie & credentials (DO NOT COMMIT)
+cookies.txt
+*cookies*.txt
+
+# Python & virtual environments
+__pycache__/
+*.py[cod]
+*.pyo
+.conda/
+.venv/
+venv/
+env/
+
+# WebUI thumbnail cache
+webui/.thumbs/
+
+# Runtime logs & download deduplication cache
+*.log
+
+# IDE & OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

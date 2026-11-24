@@ -1,58 +1,21 @@
 {
+    "cookie": "cookies.txt",
+    "users": [
+        "lilmonix3",
+        "matchach"
+    ],
+    "mode": "media",
     "save_path": "",
-    "save_path_info": "就算是windows路径也请用 '/' ,而不是反斜杠(可以留空)",
-
-    "user_lst": "lilmonix3,matchach",
-    "user_lst_info": "填入要下载的用户名(@后面的字符),支持多用户下载,用户名字间逗号(英文逗号,不要有空格)隔开",
-
-    "cookie": "auth_token=xxxxxxxxxxx; ct0=xxxxxxxxxxx;",
-    "cookie_info": "填入 cookie (auth_token与ct0字段) //重要:替换掉其中的x即可, 注意不要删掉分号",
-
-
-    "emmmmmm": "以下选项三选一, 一般全false, 即 下载目标用户自己发的图片",
-
-    "has_retweet": false,
-    "has_retweet_info": "是否包含转推 (包含转推会消耗大量API调用次数)",
-
-    "high_lights": false,
-    "high_lights_info": "推特的 [Highlights]亮点 标签，与 [媒体][转推] 不共存，即仅下载亮点标签下的内容",
-
-    "likes": false,
-    "likes_info": "用户界面 [Likes] 标签页，即下载指定用户点过赞的推文，与 [媒体][转推][亮点] 不共存, 不支持时间范围限制默认全部下载(点赞时间无法获取), 不生成csv数据统计",
-
-    "_emmmmmm_": "---------------",
-    
-
-    "time_range": "1990-01-01:2030-01-01",
-    "time_range_info": "时间范围限制,格式如 1990-01-01:2030-01-01 ,不填默认无限制",
-
-    "down_log": false,
-    "down_log_info": "开启后将记录已下载的内容,避免重复下载浪费带宽; 注意:如需重新下载已下载内容,需要关闭此选项或删除目录下的 cache_data.log 文件",
-
-    "autoSync": false,
-    "autoSync_info": "开启后将基于本地已有的内容自动同步最新的部分, 本质上是自动调整时间范围的左半部分, 右半建议2030-01-01或更长",
-
-    "image_format": "orig",
-    "image_format_info": "可选项: orig, jpg, png; orig-(自适应原图_以推特服务器为准_大部分为jpg_少部分png), jpg-(全部以jpg格式保存), png-(全部以png格式保存_文件较大)",
-
-    "has_video": true,
-    "has_video_info": "是否下载推文中的视频",
-
-    "log_output": false,
-    "log_output_info": "是否需要下载过程日志输出",
-
-    "max_concurrent_requests": 8,
-    "max_concurrent_requests_info": "最大并发数量, 默认为8, 对网络有自信的可以调高; 遇到多次下载失败时适当降低",
-
-    "proxy": "",
-    "proxy_info": "手动配置代理,默认为空,非必要无需填写 格式: http://localhost:port ",
-    
-    "md_output": false,
-    "md_output_info": "开启后输出 Markdown 文件以记录获取到的推文 (不影响csv生成)",
-    
-    "media_count_limit": 350,
-    "media_count_limit_info": "限制单个md文件中包含媒体链接的数量, 默认为 350, 建议使用vscode等动态加载工具打开, 填 0 则不限制",
-    "media_count_limit_info_2": "输出格式为：用户名-文件生成日期_文件计数_文件第一条推文的年月日期",
-
-    "(๑´ڡ`๑)": "info 是注释，凑合着看吧"
+    "advanced": {
+        "time_range": "",
+        "has_video": true,
+        "image_format": "orig",
+        "skip_downloaded": true,
+        "md_output": false,
+        "media_count_limit": 350,
+        "concurrency": 8,
+        "proxy": "",
+        "wait_on_rate_limit": false,
+        "log_output": false
+    }
 }

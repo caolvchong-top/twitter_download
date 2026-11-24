@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>X Downloader</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%236e6af0'/><stop offset='1' stop-color='%23a35cf0'/></linearGradient></defs><rect width='32' height='32' rx='8' fill='url(%23g)'/><path d='M16 8v12m-5-5 5 5 5-5M10 24h12' stroke='white' stroke-width='2.4' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>" />
+  <script>
+    // 首帧前应用主题，避免闪烁
+    (function () {
+      var pref = localStorage.getItem('xd-theme') || 'system';
+      var dark = pref === 'dark' || (pref === 'system' && matchMedia('(prefers-color-scheme: dark)').matches);
+      document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+    })();
+  </script>
+  <link rel="stylesheet" href="/static/app.css" />
+</head>
+<body>
+  <!-- ================= Icon sprite (Lucide-style) ================= -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14M12 5v14"/></symbol>
+      <symbol id="i-list" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></symbol>
+      <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></symbol>
+      <symbol id="i-images" viewBox="0 0 24 24"><path d="M18 22H4a2 2 0 0 1-2-2V6"/><path d="m22 13-1.3-1.3a2.4 2.4 0 0 0-3.4 0L11 18"/><circle cx="12" cy="8" r="2"/><rect width="16" height="16" x="6" y="2" rx="2"/></symbol>
+      <symbol id="i-settings" viewBox="0 0 24 24"><path d="M20 7h-9M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></symbol>
+      <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z"/></symbol>
+      <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></symbol>
+      <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></symbol>
+      <symbol id="i-hash" viewBox="0 0 24 24"><path d="M4 9h16M4 15h16M10 3 8 21M16 3l-2 18"/></symbol>
+      <symbol id="i-message" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></symbol>
+      <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></symbol>
+      <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/></symbol>
+      <symbol id="i-folder" viewBox="0 0 24 24"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.7-.9l-.8-1.2A2 2 0 0 0 7.9 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></symbol>
+      <symbol id="i-folder-open" viewBox="0 0 24 24"><path d="m6 14 1.5-2.9A2 2 0 0 1 9.2 10H20a2 2 0 0 1 1.9 2.5l-1.5 6a2 2 0 0 1-2 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.7.9l.8 1.2a2 2 0 0 0 1.7.9H18a2 2 0 0 1 2 2v2"/></symbol>
+      <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M21 12a9 9 0 0 0-9-9 9.8 9.8 0 0 0-6.7 2.7L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.8 9.8 0 0 0 6.7-2.7L21 16"/><path d="M16 16h5v5"/></symbol>
+      <symbol id="i-retry" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.8 9.8 0 0 0-6.7 2.7L3 8"/><path d="M3 3v5h5"/></symbol>
+      <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+      <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></symbol>
+      <symbol id="i-stop" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></symbol>
+      <symbol id="i-chevron-left" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+      <symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+      <symbol id="i-check-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m8.5 12 2.5 2.5 4.5-5"/></symbol>
+      <symbol id="i-x-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6M9 9l6 6"/></symbol>
+      <symbol id="i-minus-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/></symbol>
+      <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></symbol>
+      <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 7v5l3 2"/></symbol>
+      <symbol id="i-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></symbol>
+      <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></symbol>
+      <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M6.3 17.7l-1.4 1.4M19.1 4.9l-1.4 1.4"/></symbol>
+      <symbol id="i-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></symbol>
+      <symbol id="i-monitor" viewBox="0 0 24 24"><rect width="20" height="14" x="2" y="3" rx="2"/><path d="M8 21h8M12 17v4"/></symbol>
+      <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></symbol>
+      <symbol id="i-video" viewBox="0 0 24 24"><path d="m16 13 5.2 3.5a.5.5 0 0 0 .8-.4V7.9a.5.5 0 0 0-.8-.4L16 10.5"/><rect x="2" y="6" width="14" height="12" rx="2"/></symbol>
+      <symbol id="i-terminal" viewBox="0 0 24 24"><path d="m4 17 6-6-6-6M12 19h8"/></symbol>
+      <symbol id="i-calendar" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol>
+      <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 4 10 15 15 0 0 1-4 10 15 15 0 0 1-4-10 15 15 0 0 1 4-10z"/></symbol>
+      <symbol id="i-key" viewBox="0 0 24 24"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6M15.5 7.5l3 3L22 7l-3-3"/></symbol>
+      <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 2 10 5-10 5L2 7z"/><path d="m2 17 10 5 10-5M2 12l10 5 10-5"/></symbol>
+      <symbol id="i-zap" viewBox="0 0 24 24"><path d="M13 2 3 14h9l-1 8 10-12h-9z"/></symbol>
+      <symbol id="i-inbox" viewBox="0 0 24 24"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.5 5.1 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.5-6.9A2 2 0 0 0 16.8 4H7.2a2 2 0 0 0-1.7 1.1z"/></symbol>
+      <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01"/></symbol>
+      <symbol id="i-logo" viewBox="0 0 24 24"><path d="M12 5v10m-4-4 4 4 4-4M7 19h10"/></symbol>
+    </defs>
+  </svg>
+
+  <div class="app">
+    <!-- ================= Sidebar ================= -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark"><svg><use href="#i-logo"/></svg></div>
+        <div class="brand-name">X Downloader</div>
+      </div>
+
+      <div class="nav-label">工作区</div>
+      <nav class="nav">
+        <button class="nav-item active" data-view="new" title="新建任务" aria-label="新建任务">
+          <svg><use href="#i-plus"/></svg><span class="nav-text">新建任务</span>
+        </button>
+        <button class="nav-item" data-view="tasks" title="任务队列" aria-label="任务队列">
+          <svg><use href="#i-list"/></svg><span class="nav-text">任务队列</span><span class="nav-count hidden" id="badge-running">0</span>
+        </button>
+        <button class="nav-item" data-view="gallery" title="本地图库" aria-label="本地图库">
+          <svg><use href="#i-image"/></svg><span class="nav-text">本地图库</span>
+        </button>
+        <button class="nav-item" data-view="settings" title="设置" aria-label="设置">
+          <svg><use href="#i-settings"/></svg><span class="nav-text">设置</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="account" id="cookie-card" title="前往设置">
+          <span class="status-dot" id="cookie-dot"></span>
+          <span class="account-text">
+            <span class="account-title" id="cookie-text">检测中…</span>
+            <span class="account-sub">Cookie 状态</span>
+          </span>
+          <svg class="account-chev"><use href="#i-chevron-right"/></svg>
+        </button>
+        <dl class="env">
+          <div><dt>保存至</dt><dd id="save-root">-</dd></div>
+          <div><dt>代理</dt><dd id="proxy-text">-</dd></div>
+          <div><dt>连接</dt><dd class="row"><span class="live-dot" id="conn-dot"></span><span id="conn-text">连接中</span></dd></div>
+        </dl>
+        <div class="theme-switch" id="theme-switch" role="radiogroup" aria-label="主题">
+          <button data-theme-value="light" title="浅色"><svg><use href="#i-sun"/></svg></button>
+          <button data-theme-value="system" title="跟随系统"><svg><use href="#i-monitor"/></svg></button>
+          <button data-theme-value="dark" title="深色"><svg><use href="#i-moon"/></svg></button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ================= Main ================= -->
+    <main class="main">
+
+      <!-- ===== New task ===== -->
+      <section class="view active" id="view-new">
+        <header class="topbar">
+          <div class="crumbs"><span class="crumb-strong">新建任务</span></div>
+          <div class="topbar-actions">
+            <button class="btn" id="btn-batch" title="按设置中的批量用户列表与默认模式运行">
+              <svg><use href="#i-layers"/></svg>一键批量运行
+            </button>
+          </div>
+        </header>
+
+        <div class="content">
+          <div class="hero">
+            <h1>下载什么？</h1>
+            <p>选择类型并填写目标，任务会进入队列执行，进度与日志实时更新。</p>
+          </div>
+
+          <div class="new-layout">
+            <div class="panel">
+              <div class="tabs" id="type-tabs" role="tablist">
+                <button class="tab active" data-type="user_media"><svg><use href="#i-images"/></svg>用户媒体</button>
+                <button class="tab" data-type="tweet"><svg><use href="#i-link"/></svg>单条推文</button>
+                <button class="tab" data-type="search"><svg><use href="#i-hash"/></svg>标签搜索</button>
+                <button class="tab" data-type="replies"><svg><use href="#i-message"/></svg>评论区</button>
+                <button class="tab" data-type="user_text"><svg><use href="#i-file"/></svg>纯文本</button>
+                <button class="tab" data-type="profile"><svg><use href="#i-user"/></svg>主页资料</button>
+              </div>
+
+              <form id="task-form" autocomplete="off">
+                <div class="panel-body">
+                  <p class="type-desc" id="type-desc"></p>
+
+                  <div class="field" data-for="user_media user_text profile">
+                    <div class="label-row"><label>用户名</label><span class="hint">逗号或换行分隔，可带 @</span></div>
+                    <textarea name="targets_users" rows="3" placeholder="lilmonix3, matchach"></textarea>
+                  </div>
+                  <div class="field" data-for="tweet">
+                    <div class="label-row"><label>推文链接或 ID</label><span class="hint">每行一个</span></div>
+                    <textarea name="targets_tweets" rows="4" placeholder="https://x.com/username/status/1234567890"></textarea>
+                  </div>
+                  <div class="field" data-for="replies">
+                    <div class="label-row"><label>推文链接或 @用户名</label><span class="hint">用户名将抓取其推文下的评论</span></div>
+                    <textarea name="targets_replies" rows="3" placeholder="https://x.com/username/status/1234567890&#10;@someone"></textarea>
+                  </div>
+
+                  <div class="field" data-for="user_media">
+                    <div class="label-row"><label>下载模式</label></div>
+                    <div class="segmented" data-name="mode">
+                      <button type="button" data-value="media" class="active">仅本人媒体</button>
+                      <button type="button" data-value="retweet">含转推</button>
+                      <button type="button" data-value="highlights">亮点</button>
+                      <button type="button" data-value="likes">喜欢</button>
+                    </div>
+                    <div class="note" id="likes-hint" hidden><svg><use href="#i-alert"/></svg>「喜欢」仅能获取当前登录账号本人的列表，且不支持时间范围。</div>
+                  </div>
+
+                  <div class="grid-2" data-for="search">
+                    <div class="field">
+                      <div class="label-row"><label>标签 / 关键词</label></div>
+                      <input name="tag" placeholder="#ヨルクラ" />
+                    </div>
+                    <div class="field">
+                      <div class="label-row"><label>高级搜索条件</label><span class="hint">可选</span></div>
+                      <input name="filter" placeholder="from:user min_faves:100" />
+                    </div>
+                  </div>
+                  <div class="grid-2" data-for="search">
+                    <div class="field">
+                      <div class="label-row"><label>结果类型</label></div>
+                      <div class="segmented" data-name="search_mode">
+                        <button type="button" data-value="media" class="active">热门媒体</button>
+                        <button type="button" data-value="media_latest">最新媒体</button>
+                        <button type="button" data-value="text">纯文本</button>
+                      </div>
+                    </div>
+                    <div class="field">
+                      <div class="label-row"><label>抓取上限</label><span class="hint">推文数</span></div>
+                      <input name="limit" type="number" min="1" value="100" />
+                    </div>
+                  </div>
+
+                  <div class="field" data-for="user_media user_text replies" id="field-time">
+                    <div class="label-row"><label>时间范围</label><span class="hint">留空不限</span></div>
+                    <div class="date-range">
+                      <div class="input-icon"><svg><use href="#i-calendar"/></svg><input type="date" name="time_start" /></div>
+                      <span class="range-sep">→</span>
+                      <div class="input-icon"><svg><use href="#i-calendar"/></svg><input type="date" name="time_end" /></div>
+                      <div class="quick">
+                        <button type="button" data-range="7">7 天</button>
+                        <button type="button" data-range="30">30 天</button>
+                        <button type="button" data-range="365">1 年</button>
+                        <button type="button" data-range="0">不限</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="field" data-for="user_text">
+                    <label class="switch"><input type="checkbox" name="include_retweet" /><span class="track"></span><span>包含转推</span></label>
+                  </div>
+                  <div class="field" data-for="replies">
+                    <label class="switch"><input type="checkbox" name="media_down" checked /><span class="track"></span><span>同时下载评论区图片与视频</span></label>
+                  </div>
+                </div>
+
+                <div class="panel-footer">
+                  <span class="summary" id="form-summary"></span>
+                  <button type="submit" class="btn btn-primary" id="btn-submit">
+                    <svg><use href="#i-download"/></svg>开始下载<kbd>Ctrl ↵</kbd>
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            <aside class="side">
+              <div class="panel">
+                <div class="panel-head"><span>账号预览</span></div>
+                <div class="panel-body">
+                  <div class="search-box">
+                    <svg><use href="#i-search"/></svg>
+                    <input id="preview-name" placeholder="输入用户名预览" />
+                    <button class="btn btn-sm" id="btn-preview" type="button">查看</button>
+                  </div>
+                  <div id="preview-area" class="preview-placeholder">
+                    <svg><use href="#i-user"/></svg>
+                    <span>查看账号资料，同时在线校验 Cookie</span>
+                  </div>
+                </div>
+              </div>
+              <div class="panel">
+                <div class="panel-head"><span>当前下载选项</span><button class="link" data-goto="settings" type="button">修改</button></div>
+                <dl class="kv" id="effective-opts"></dl>
+              </div>
+            </aside>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== Tasks ===== -->
+      <section class="view" id="view-tasks">
+        <header class="topbar">
+          <div class="crumbs"><span class="crumb-strong">任务队列</span></div>
+          <div class="topbar-actions">
+            <div class="segmented segmented-sm" id="task-filter">
+              <button data-value="all" class="active">全部</button>
+              <button data-value="active">进行中</button>
+              <button data-value="done">已完成</button>
+              <button data-value="failed">失败</button>
+            </div>
+            <button class="btn btn-sm" id="btn-clear"><svg><use href="#i-trash"/></svg>清除已结束</button>
+          </div>
+        </header>
+        <div class="content">
+          <div class="metrics" id="stats-bar"></div>
+          <div class="task-list" id="task-list"></div>
+          <div class="empty hidden" id="task-empty">
+            <div class="empty-icon"><svg><use href="#i-inbox"/></svg></div>
+            <div class="empty-title">暂无任务</div>
+            <div class="empty-sub">创建的下载任务会显示在这里</div>
+            <button class="btn btn-primary btn-sm" data-goto="new"><svg><use href="#i-plus"/></svg>新建任务</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== Gallery ===== -->
+      <section class="view" id="view-gallery">
+        <header class="topbar">
+          <div class="crumbs">
+            <button class="crumb" id="crumb-gallery">本地图库</button>
+            <span class="crumb-sep hidden" id="crumb-sep"><svg><use href="#i-chevron-right"/></svg></span>
+            <span class="crumb-strong hidden" id="crumb-folder"></span>
+            <span class="crumb-meta" id="gallery-sub"></span>
+          </div>
+          <div class="topbar-actions">
+            <div class="segmented segmented-sm hidden" id="gallery-kind">
+              <button data-value="media" class="active">全部媒体</button>
+              <button data-value="image">图片</button>
+              <button data-value="video">视频</button>
+              <button data-value="doc">文档</button>
+            </div>
+            <div class="search-box search-box-sm hidden" id="gallery-search-box">
+              <svg><use href="#i-search"/></svg>
+              <input id="gallery-search" placeholder="搜索文件名" />
+            </div>
+            <button class="icon-btn" id="btn-gallery-open" title="在资源管理器中打开"><svg><use href="#i-folder-open"/></svg></button>
+            <button class="icon-btn" id="btn-gallery-refresh" title="刷新"><svg><use href="#i-refresh"/></svg></button>
+          </div>
+        </header>
+        <div class="content content-wide">
+          <div id="folder-grid" class="folder-grid"></div>
+          <div id="media-grid" class="media-grid hidden"></div>
+          <div class="load-more hidden" id="gallery-more"><button class="btn">加载更多</button></div>
+          <div class="empty hidden" id="gallery-empty">
+            <div class="empty-icon"><svg><use href="#i-folder"/></svg></div>
+            <div class="empty-title">这里还没有内容</div>
+            <div class="empty-sub">下载完成的文件会按文件夹出现在这里</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== Settings ===== -->
+      <section class="view" id="view-settings">
+        <header class="topbar">
+          <div class="crumbs"><span class="crumb-strong">设置</span><span class="crumb-meta" id="settings-path"></span></div>
+          <div class="topbar-actions">
+            <span class="dirty hidden" id="dirty-flag">有未保存的更改</span>
+            <button class="btn" id="btn-reset-settings" disabled>撤销</button>
+            <button class="btn btn-primary" id="btn-save-settings" disabled><svg><use href="#i-check"/></svg>保存</button>
+          </div>
+        </header>
+
+        <div class="content content-narrow">
+          <form id="settings-form" autocomplete="off">
+            <section class="setting-card">
+              <header><h2>账号</h2><p>用于访问 X 接口的登录凭证，等同于账号密码，请勿泄露。</p></header>
+              <div class="setting-row">
+                <div class="setting-label"><div>Cookie</div><p>cookies.txt 路径，或 <code>auth_token=…; ct0=…;</code></p></div>
+                <div class="setting-control">
+                  <input name="cookie" placeholder="cookies.txt" />
+                  <div class="btn-row">
+                    <label class="btn btn-sm file-btn"><svg><use href="#i-upload"/></svg>上传 cookies.txt<input type="file" accept=".txt" id="cookie-file" hidden /></label>
+                    <button type="button" class="btn btn-sm" id="btn-verify"><svg><use href="#i-shield"/></svg>在线校验</button>
+                  </div>
+                  <div class="verify" id="verify-result"></div>
+                </div>
+              </div>
+            </section>
+
+            <section class="setting-card">
+              <header><h2>批量下载</h2><p>「一键批量运行」使用的用户列表与默认参数。</p></header>
+              <div class="setting-row">
+                <div class="setting-label"><div>用户列表</div><p>回车或逗号添加</p></div>
+                <div class="setting-control"><div class="tag-input" id="users-input"><input placeholder="添加用户名…" /></div></div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-label"><div>默认模式</div></div>
+                <div class="setting-control">
+                  <div class="segmented segmented-sm" data-name="mode" id="set-mode">
+                    <button type="button" data-value="media">仅本人</button>
+                    <button type="button" data-value="retweet">含转推</button>
+                    <button type="button" data-value="highlights">亮点</button>
+                    <button type="button" data-value="likes">喜欢</button>
+                  </div>
+                </div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-label"><div>保存目录</div><p>留空则保存到项目根目录</p></div>
+                <div class="setting-control"><input name="save_path" placeholder="D:\Pictures\X" /></div>
+              </div>
+            </section>
+
+            <section class="setting-card">
+              <header><h2>下载</h2><p>影响所有任务的下载行为。</p></header>
+              <div class="setting-row">
+                <div class="setting-label"><div>图片格式</div><p>原图体积最小且无损；JPG / PNG 为 4096 转码</p></div>
+                <div class="setting-control">
+                  <div class="segmented segmented-sm" data-name="image_format" id="set-format">
+                    <button type="button" data-value="orig">原图 orig</button>
+                    <button type="button" data-value="jpg">JPG</button>
+                    <button type="button" data-value="png">PNG</button>
+                  </div>
+                </div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-label"><div>默认时间范围</div><p>YYYY-MM-DD:YYYY-MM-DD</p></div>
+                <div class="setting-control"><input name="time_range" placeholder="2024-01-01:2024-12-31" /></div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-label"><div>并发下载数</div><p>过高可能导致连接失败</p></div>
+                <div class="setting-control range-row"><input type="range" name="concurrency" min="1" max="32" /><output id="concurrency-val">8</output></div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-label"><div>下载视频 / GIF</div></div>
+                <div class="setting-control end"><label class="switch"><input type="checkbox" name="has_video" /><span class="track"></span></label></div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-label"><div>跳过已下载</div><p>根据记录与本地文件去重</p></div>
+                <div class="setting-control end"><label class="switch"><input type="checkbox" name="skip_downloaded" /><span class="track"></span></label></div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-label"><div>生成 Markdown</div><p>额外输出带图片链接的记录</p></div>
+                <div class="setting-control end"><label class="switch"><input type="checkbox" name="md_output" /><span class="track"></span></label></div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-label"><div>Markdown 单文件上限</div><p>每个 md 文件的媒体条数</p></div>
+                <div class="setting-control"><input name="media_count_limit" type="number" min="0" /></div>
+              </div>
+            </section>
+
+            <section class="setting-card">
+              <header><h2>网络</h2><p>代理与限流处理策略。</p></header>
+              <div class="setting-row">
+                <div class="setting-label"><div>代理</div><p>开着 VPN / 系统代理时留空即可；支持 http:// 与 socks5://</p></div>
+                <div class="setting-control"><input name="proxy" placeholder="http://127.0.0.1:7890" /></div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-label"><div>限流自动等待</div><p>触发 429 时等待重置后继续</p></div>
+                <div class="setting-control end"><label class="switch"><input type="checkbox" name="wait_on_rate_limit" /><span class="track"></span></label></div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-label"><div>逐文件日志</div><p>在任务日志中记录每个文件</p></div>
+                <div class="setting-control end"><label class="switch"><input type="checkbox" name="log_output" /><span class="track"></span></label></div>
+              </div>
+            </section>
+
+            <section class="setting-card">
+              <header><h2>存储与缓存</h2><p>管理 WebUI 生成的本地临时缓存文件。</p></header>
+              <div class="setting-row">
+                <div class="setting-label">
+                  <div>图库缩略图缓存</div>
+                  <p id="thumb-cache-info">正在统计…</p>
+                </div>
+                <div class="setting-control end cache-actions">
+                  <button type="button" class="btn btn-sm" id="btn-clear-thumbs"><svg><use href="#i-trash"/></svg>清理缓存</button>
+                  <span class="help-wrap">
+                    <button type="button" class="help-btn" id="btn-thumb-help" aria-label="查看缩略图缓存说明" aria-expanded="false" aria-controls="thumb-help-pop" title="点击查看说明">
+                      <svg><use href="#i-help"/></svg>
+                    </button>
+                    <div class="help-pop hidden" id="thumb-help-pop" role="tooltip">
+                      <div class="help-pop-title">什么是缩略图缓存？</div>
+                      <p>浏览「本地图库」时，WebUI 会把图片压缩为较小缩略图缓存在 <code>webui/.thumbs/</code> 中，用于加速页面加载。</p>
+                      <p>清理缓存<strong>不会删除</strong>已下载的原图、视频或去重记录；下次浏览图库时会按需重新生成。</p>
+                    </div>
+                  </span>
+                </div>
+              </div>
+            </section>
+          </form>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Lightbox -->
+  <div class="lightbox hidden" id="lightbox">
+    <div class="lb-top">
+      <span class="lb-caption" id="lb-caption"></span>
+      <button class="lb-btn" id="lb-close" title="关闭 (Esc)"><svg><use href="#i-x"/></svg></button>
+    </div>
+    <button class="lb-btn lb-nav lb-prev" id="lb-prev" title="上一张 (←)"><svg><use href="#i-chevron-left"/></svg></button>
+    <div class="lb-stage" id="lb-stage"></div>
+    <button class="lb-btn lb-nav lb-next" id="lb-next" title="下一张 (→)"><svg><use href="#i-chevron-right"/></svg></button>
+  </div>
+
+  <div class="toasts" id="toasts"></div>
+
+  <template id="tpl-task">
+    <article class="task">
+      <div class="task-row">
+        <span class="task-icon"></span>
+        <div class="task-main">
+          <div class="task-line">
+            <span class="task-title"></span>
+            <span class="task-type"></span>
+          </div>
+          <div class="task-meta"></div>
+          <div class="task-message"></div>
+          <div class="task-results"></div>
+        </div>
+        <div class="task-metrics"></div>
+        <div class="task-actions">
+          <button class="icon-btn act-logs" title="日志"><svg><use href="#i-terminal"/></svg></button>
+          <button class="icon-btn act-open" title="打开保存目录"><svg><use href="#i-folder-open"/></svg></button>
+          <button class="icon-btn act-retry" title="重新运行"><svg><use href="#i-retry"/></svg></button>
+          <button class="icon-btn act-cancel danger" title="取消任务"><svg><use href="#i-stop"/></svg></button>
+          <button class="icon-btn act-delete" title="删除记录"><svg><use href="#i-trash"/></svg></button>
+        </div>
+      </div>
+      <div class="task-progress"><div class="bar"></div></div>
+      <div class="task-logs hidden"><div class="log-box"></div></div>
+    </article>
+  </template>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

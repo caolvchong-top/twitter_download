@@ -2,6 +2,10 @@
 (() => {
   'use strict';
 
+  // ------------------------------------------------------------------ i18n
+  const I18N = window.XD_I18N;
+  const t = (key, vars) => I18N.t(key, vars);
+
   // ------------------------------------------------------------------ utils
   const $ = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
@@ -41,26 +45,19 @@
     const el = document.createElement('div');
     el.className = `toast ${type}`;
     el.innerHTML = `${icon(TOAST_ICON[type] || 'alert')}<span>${esc(msg)}</span>`;
-    el.title = '点击关闭';
+    el.title = t('toast.close');
     const close = () => { el.classList.add('out'); setTimeout(() => el.remove(), 260); };
     el.addEventListener('click', close);
     $('#toasts').appendChild(el);
     setTimeout(close, ms);
   }
 
-  const STATUS_LABEL = { queued: '排队中', running: '运行中', done: '已完成', partial: '部分完成', failed: '失败', cancelled: '已取消' };
   const STATUS_ICON = { queued: 'clock', done: 'check-circle', failed: 'x-circle', partial: 'alert', cancelled: 'minus-circle' };
-  const PHASE_LABEL = { init: '初始化', running: '运行中', fetching: '抓取中', downloading: '下载中', waiting_rate_limit: '限流等待', done: '完成', cancelled: '已取消', error: '出错' };
-  const MODE_LABEL = { media: '仅本人媒体', retweet: '含转推', highlights: '亮点', likes: '喜欢' };
-  const TYPE_LABEL = { user_media: '用户媒体', tweet: '单条推文', search: '标签搜索', replies: '评论区', user_text: '纯文本', profile: '主页资料' };
-  const TYPE_DESC = {
-    user_media: '下载用户发布的图片与视频，可选择包含转推、亮点或喜欢列表。',
-    tweet: '粘贴一条或多条推文链接，快速下载其中的原图与视频。',
-    search: '按标签或高级搜索语法抓取媒体，也可以导出为纯文本 CSV。',
-    replies: '将推文评论区导出为 CSV，并可同时下载评论中的图片与视频。',
-    user_text: '将用户的推文正文导出为 CSV，便于归档与检索。',
-    profile: '保存用户的头像、横幅图与个人简介。',
-  };
+  const statusLabel = (s) => t(`status.${s}`);
+  const phaseLabel = (p) => (p ? t(`phase.${p}`) : t('phase.running'));
+  const modeLabel = (m) => (m ? t(`mode.${m}`) : '');
+  const typeLabel = (tp) => t(`type.${tp}`);
+  const typeDesc = (tp) => t(`typeDesc.${tp}`);
   const FINAL = new Set(['done', 'partial', 'failed', 'cancelled']);
 
   // ------------------------------------------------------------------ state
@@ -70,7 +67,10 @@
     logs: new Map(),
     taskFilter: 'all',
     type: 'user_media',
-    gallery: { folder: null, kind: 'media', q: '', offset: 0, total: 0, items: [] },
+    connState: 'init',
+    previewProfile: null,
+    verifyState: null,
+    gallery: { folder: null, kind: 'media', q: '', offset: 0, total: 0, items: [], foldersData: null },
     users: [],
     settingsSnapshot: '',
   };
@@ -87,11 +87,48 @@
   themeMq.addEventListener('change', () => { if ((localStorage.getItem('xd-theme') || 'system') === 'system') applyTheme('system'); });
   applyTheme(localStorage.getItem('xd-theme') || 'system');
 
+  // ------------------------------------------------------------------ language
+  function renderConn() {
+    const ok = state.connState === 'live';
+    const bad = state.connState === 'retry';
+    $('#conn-dot').className = `live-dot ${ok ? 'ok' : bad ? 'bad' : ''}`;
+    $('#conn-text').textContent = state.connState === 'live'
+      ? t('sidebar.connLive')
+      : state.connState === 'retry'
+        ? t('sidebar.connRetry')
+        : t('sidebar.connInit');
+  }
+
+  function applyLang(lang, rerender = true) {
+    const active = I18N.setLang(lang);
+    $$('#lang-switch button').forEach((b) => b.classList.toggle('active', b.dataset.langValue === active));
+    if (!rerender) return;
+    renderConn();
+    renderStatus();
+    renderEffectiveOpts();
+    $('#type-desc').textContent = typeDesc(state.type);
+    updateSummary();
+    if (state.previewProfile) renderPreviewProfile(state.previewProfile);
+    state.jobs.forEach((j) => renderJob(j));
+    $$('.log-empty').forEach((el) => { el.textContent = t('task.logEmpty'); });
+    renderTaskOverview();
+    if (state.gallery.folder) {
+      $('#gallery-sub').textContent = t('gallery.filesCount', { n: fmtNum(state.gallery.total) });
+      $$('#media-grid .tile-badge').forEach((el) => { el.innerHTML = `${icon('video')}${esc(t('gallery.videoBadge'))}`; });
+    } else if (state.gallery.foldersData) {
+      renderGalleryFolders(state.gallery.foldersData);
+    }
+    renderUsers();
+    if (state.verifyState) renderVerifyState();
+    if (state.cfg?.thumb_cache) renderThumbCache(state.cfg.thumb_cache);
+  }
+  $$('#lang-switch button').forEach((b) => b.addEventListener('click', () => applyLang(b.dataset.langValue, true)));
+
   // ------------------------------------------------------------------ navigation
   function currentView() { return ($('.view.active') || {}).id?.replace('view-', ''); }
   function showView(name) {
     if (currentView() === 'settings' && name !== 'settings' && isSettingsDirty()
-      && !confirm('设置有未保存的更改，确定离开吗？')) return;
+      && !confirm(t('settings.leaveConfirm'))) return;
     $$('.nav-item').forEach((b) => b.classList.toggle('active', b.dataset.view === name));
     $$('.view').forEach((v) => v.classList.toggle('active', v.id === `view-${name}`));
     if (name === 'gallery') loadGallery();
@@ -116,6 +153,15 @@
   const setSeg = (seg, value) => $$('button', seg).forEach((b) => b.classList.toggle('active', b.dataset.value === value));
 
   // ------------------------------------------------------------------ config / status
+  function formatCookieStatus(st) {
+    if (!st) return '';
+    if (st.ok) {
+      const src = st.is_manual ? t('cookie.manualSource') : (st.source || state.cfg?.config?.cookie || 'cookies.txt');
+      return t('cookie.readyDetail', { src });
+    }
+    return st.message || '';
+  }
+
   async function loadConfig() {
     try {
       state.cfg = await api('/api/config');
@@ -124,7 +170,7 @@
       prefillTaskForm();
       if (currentView() === 'settings') fillSettings();
     } catch (e) {
-      toast(`读取配置失败：${e.message}`, 'error');
+      toast(t('toast.loadCfgFail', { msg: e.message }), 'error');
     }
   }
 
@@ -133,27 +179,27 @@
     if (!cfg) return;
     const st = cfg.cookie_status;
     $('#cookie-dot').className = `status-dot ${st.ok ? 'ok' : 'bad'}`;
-    $('#cookie-text').textContent = st.ok ? '已就绪' : '未配置';
-    $('#cookie-card').title = st.message;
+    $('#cookie-text').textContent = st.ok ? t('sidebar.cookieReady') : t('sidebar.cookieUnset');
+    $('#cookie-card').title = formatCookieStatus(st);
     const root = cfg.resolved_save_root;
     const segs = root.split(/[\\/]/).filter(Boolean);
     $('#save-root').textContent = segs.length > 2 ? `…\\${segs.slice(-2).join('\\')}` : root;
     $('#save-root').title = root;
-    $('#proxy-text').textContent = cfg.config.advanced.proxy || '未设置';
+    $('#proxy-text').textContent = cfg.config.advanced.proxy || t('sidebar.proxyUnset');
   }
 
   function renderEffectiveOpts() {
     const c = state.cfg?.config;
     if (!c) return;
     const a = c.advanced;
-    const yn = (v) => [v ? '开启' : '关闭', v ? 'on' : ''];
+    const yn = (v) => [v ? t('common.on') : t('common.off'), v ? 'on' : ''];
     const rows = [
-      ['图片格式', [a.image_format]],
-      ['下载视频', yn(a.has_video)],
-      ['跳过已下载', yn(a.skip_downloaded)],
-      ['并发数', [a.concurrency]],
-      ['限流等待', yn(a.wait_on_rate_limit)],
-      ['Markdown', yn(a.md_output)],
+      [t('opts.imageFormat'), [a.image_format]],
+      [t('opts.hasVideo'), yn(a.has_video)],
+      [t('opts.skipDownloaded'), yn(a.skip_downloaded)],
+      [t('opts.concurrency'), [a.concurrency]],
+      [t('opts.waitRateLimit'), yn(a.wait_on_rate_limit)],
+      [t('opts.markdown'), yn(a.md_output)],
     ];
     $('#effective-opts').innerHTML = rows.map(([k, [v, cls = '']]) => `<div><dt>${esc(k)}</dt><dd class="${cls}">${esc(v)}</dd></div>`).join('');
   }
@@ -165,7 +211,7 @@
     state.type = type;
     $$('#type-tabs .tab').forEach((c) => c.classList.toggle('active', c.dataset.type === type));
     $$('[data-for]', form).forEach((el) => el.classList.toggle('hidden', !el.dataset.for.split(' ').includes(type)));
-    $('#type-desc').textContent = TYPE_DESC[type];
+    $('#type-desc').textContent = typeDesc(type);
     updateLikesState();
     updateSummary();
   }
@@ -211,18 +257,18 @@
   }
 
   function collectTask() {
-    const t = state.type;
+    const tType = state.type;
     const params = {};
-    if (['user_media', 'user_text', 'profile'].includes(t)) params.targets = splitList(form.targets_users.value);
-    if (t === 'tweet') params.targets = splitList(form.targets_tweets.value);
-    if (t === 'replies') params.targets = splitList(form.targets_replies.value);
-    if (t === 'user_media') {
+    if (['user_media', 'user_text', 'profile'].includes(tType)) params.targets = splitList(form.targets_users.value);
+    if (tType === 'tweet') params.targets = splitList(form.targets_tweets.value);
+    if (tType === 'replies') params.targets = splitList(form.targets_replies.value);
+    if (tType === 'user_media') {
       params.mode = segValue($('[data-name=mode]', form));
       params.time_range = params.mode === 'likes' ? '' : timeRangeValue();
     }
-    if (t === 'user_text') { params.time_range = timeRangeValue(); params.include_retweet = form.include_retweet.checked; }
-    if (t === 'replies') { params.time_range = timeRangeValue(true); params.media_down = form.media_down.checked; }
-    if (t === 'search') {
+    if (tType === 'user_text') { params.time_range = timeRangeValue(); params.include_retweet = form.include_retweet.checked; }
+    if (tType === 'replies') { params.time_range = timeRangeValue(true); params.media_down = form.media_down.checked; }
+    if (tType === 'search') {
       params.tag = form.tag.value.trim();
       params.filter = form.filter.value.trim();
       params.search_mode = segValue($('[data-name=search_mode]', form));
@@ -235,17 +281,23 @@
     const p = collectTask();
     const parts = [];
     if (state.type === 'search') {
-      if (p.tag || p.filter) parts.push(`「${[p.tag, p.filter].filter(Boolean).join(' ')}」`, `上限 ${p.limit}`);
-      else parts.push('请输入标签或搜索条件');
+      if (p.tag || p.filter) {
+        parts.push(
+          t('new.summaryQuery', { q: [p.tag, p.filter].filter(Boolean).join(' ') }),
+          t('new.summaryLimit', { n: p.limit }),
+        );
+      } else {
+        parts.push(t('new.summaryNeedSearch'));
+      }
     } else if (p.targets) {
-      parts.push(p.targets.length ? `${p.targets.length} 个目标` : '尚未填写目标');
+      parts.push(p.targets.length ? t('new.summaryTargets', { n: p.targets.length }) : t('new.summaryNeedTarget'));
     }
-    if (state.type === 'user_media') parts.push(MODE_LABEL[p.mode] || '');
+    if (state.type === 'user_media') parts.push(modeLabel(p.mode));
     if (p.time_range) parts.push(p.time_range.replace(':', ' → '));
     $('#form-summary').textContent = parts.filter(Boolean).join(' · ');
     const ready = state.type === 'search' ? !!(p.tag || p.filter) : !!(p.targets && p.targets.length);
     $('#btn-submit').disabled = !ready;
-    $('#btn-submit').title = ready ? '' : '请先填写目标';
+    $('#btn-submit').title = ready ? '' : t('new.submitNeedTarget');
   }
   form.addEventListener('input', updateSummary);
 
@@ -256,7 +308,7 @@
     try {
       const job = await api('/api/tasks', { method: 'POST', body: { type: state.type, params: collectTask() } });
       upsertJob(job);
-      toast(`已加入队列：${job.title}`, 'success');
+      toast(t('toast.queued', { title: job.title }), 'success');
       showView('tasks');
     } catch (err) {
       toast(err.message, 'error');
@@ -279,17 +331,37 @@
 
   $('#btn-batch').addEventListener('click', async () => {
     const users = state.cfg?.config.users || [];
-    if (!users.length) { toast('请先在设置中添加批量用户', 'warn'); return showView('settings'); }
-    if (!confirm(`将按设置批量下载 ${users.length} 个用户（${MODE_LABEL[state.cfg.config.mode]}）：\n${users.join(', ')}`)) return;
+    if (!users.length) { toast(t('toast.batchNoUsers'), 'warn'); return showView('settings'); }
+    if (!confirm(t('toast.batchConfirm', {
+      n: users.length,
+      mode: modeLabel(state.cfg.config.mode),
+      users: users.join(', '),
+    }))) return;
     try {
       const job = await api('/api/tasks', { method: 'POST', body: { type: 'batch' } });
       upsertJob(job);
-      toast('批量任务已加入队列', 'success');
+      toast(t('toast.batchQueued'), 'success');
       showView('tasks');
     } catch (err) { toast(err.message, 'error'); }
   });
 
   // user preview
+  function renderPreviewProfile(p) {
+    const area = $('#preview-area');
+    area.className = '';
+    area.innerHTML = `
+      <div class="profile">
+        <div class="profile-banner" style="${p.banner_url ? `background-image:url('${esc(p.banner_url)}')` : ''}"></div>
+        <div class="profile-body">
+          <img class="profile-avatar" src="${esc(p.avatar_url)}" alt="" referrerpolicy="no-referrer" />
+          <div class="profile-name">${esc(p.name)}</div>
+          <div class="profile-sn">@${esc(p.screen_name)}</div>
+          ${p.description ? `<div class="profile-desc">${esc(p.description)}</div>` : '<div style="height:10px"></div>'}
+          <div class="profile-stats"><span><b>${fmtNum(p.statuses_count)}</b>${esc(t('preview.tweets'))}</span><span><b>${fmtNum(p.media_count)}</b>${esc(t('preview.media'))}</span></div>
+        </div>
+      </div>`;
+  }
+
   $('#btn-preview').addEventListener('click', previewUser);
   $('#preview-name').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); previewUser(); } });
   async function previewUser() {
@@ -300,24 +372,15 @@
       $('#preview-name').value = name;
     }
     name = name.replace(/^@/, '');
-    if (!name) { toast('请输入要预览的用户名', 'warn'); return; }
+    if (!name) { toast(t('preview.needName'), 'warn'); return; }
+    state.previewProfile = null;
     const area = $('#preview-area');
     area.className = 'preview-placeholder';
-    area.innerHTML = '<span class="spinner"></span><span>加载中…</span>';
+    area.innerHTML = `<span class="spinner"></span><span>${esc(t('preview.loading'))}</span>`;
     try {
       const p = await api(`/api/user/${encodeURIComponent(name)}`);
-      area.className = '';
-      area.innerHTML = `
-        <div class="profile">
-          <div class="profile-banner" style="${p.banner_url ? `background-image:url('${esc(p.banner_url)}')` : ''}"></div>
-          <div class="profile-body">
-            <img class="profile-avatar" src="${esc(p.avatar_url)}" alt="" referrerpolicy="no-referrer" />
-            <div class="profile-name">${esc(p.name)}</div>
-            <div class="profile-sn">@${esc(p.screen_name)}</div>
-            ${p.description ? `<div class="profile-desc">${esc(p.description)}</div>` : '<div style="height:10px"></div>'}
-            <div class="profile-stats"><span><b>${fmtNum(p.statuses_count)}</b>推文</span><span><b>${fmtNum(p.media_count)}</b>媒体</span></div>
-          </div>
-        </div>`;
+      state.previewProfile = p;
+      renderPreviewProfile(p);
     } catch (err) {
       area.className = 'preview-placeholder error';
       area.innerHTML = `${icon('x-circle')}<span>${esc(err.message)}</span>`;
@@ -355,7 +418,7 @@
       try { await api(`/api/tasks/${job.id}/cancel`, { method: 'POST' }); } catch (e) { toast(e.message, 'error'); }
     });
     $('.act-retry', el).addEventListener('click', async () => {
-      try { const j = await api(`/api/tasks/${job.id}/retry`, { method: 'POST' }); upsertJob(j); toast('已重新加入队列', 'success'); } catch (e) { toast(e.message, 'error'); }
+      try { const j = await api(`/api/tasks/${job.id}/retry`, { method: 'POST' }); upsertJob(j); toast(t('toast.requeued'), 'success'); } catch (e) { toast(e.message, 'error'); }
     });
     $('.act-delete', el).addEventListener('click', async () => {
       try { await api(`/api/tasks/${job.id}`, { method: 'DELETE' }); removeJob(job.id); } catch (e) { toast(e.message, 'error'); }
@@ -391,23 +454,25 @@
     const ic = $('.task-icon', el);
     ic.className = `task-icon ${job.status}`;
     ic.innerHTML = job.status === 'running' ? '<span class="spinner"></span>' : icon(STATUS_ICON[job.status] || 'clock');
-    ic.title = job.cancel_requested && job.status === 'running' ? '取消中' : STATUS_LABEL[job.status];
+    ic.title = job.cancel_requested && job.status === 'running' ? t('status.cancelling') : statusLabel(job.status);
 
-    const label = job.targets.length > 3 ? `${job.targets.slice(0, 3).join(', ')} 等 ${job.targets.length} 个` : job.targets.join(', ');
+    const label = job.targets.length > 3
+      ? t('task.targetsMore', { head: job.targets.slice(0, 3).join(', '), n: job.targets.length })
+      : job.targets.join(', ');
     $('.task-title', el).textContent = label;
     $('.task-title', el).title = job.targets.join('\n');
-    $('.task-type', el).textContent = TYPE_LABEL[job.type] || job.type;
+    $('.task-type', el).textContent = typeLabel(job.type) || job.type;
 
     const p = job.progress || {};
     const meta = [];
     if (job.status === 'running') {
-      const phase = job.cancel_requested ? '取消中' : (PHASE_LABEL[p.phase] || '运行中');
+      const phase = job.cancel_requested ? t('status.cancelling') : phaseLabel(p.phase);
       meta.push(`<span class="phase">${esc(phase)}</span>`);
     } else {
-      meta.push(esc(STATUS_LABEL[job.status]));
+      meta.push(esc(statusLabel(job.status)));
     }
-    if (job.targets.length > 1) meta.push(`目标 ${Math.min(job.current_index + 1, job.targets.length)}/${job.targets.length}`);
-    if (job.type === 'user_media' && job.params.mode) meta.push(esc(MODE_LABEL[job.params.mode]));
+    if (job.targets.length > 1) meta.push(esc(t('task.targetIdx', { cur: Math.min(job.current_index + 1, job.targets.length), total: job.targets.length })));
+    if (job.type === 'user_media' && job.params.mode) meta.push(esc(modeLabel(job.params.mode)));
     if (job.params.time_range) meta.push(esc(job.params.time_range.replace(':', ' → ')));
     meta.push(`#${job.id} · ${fmtClock(job.created_at)}`);
     if (job.started_at) meta.push(`<span class="elapsed" data-start="${job.started_at}" data-end="${job.finished_at || ''}">${fmtDur((job.finished_at || Date.now() / 1000) - job.started_at)}</span>`);
@@ -419,14 +484,14 @@
     prog.classList.toggle('indeterminate', pct === null && job.status === 'running');
     $('.bar', prog).style.width = `${pct ?? 0}%`;
 
-    const t = job.totals;
+    const tot = job.totals;
     const metrics = [];
-    if (job.status === 'running' && pct !== null) metrics.push(['进度', `${Math.floor(pct)}%`, 'm-pct']);
-    metrics.push(['下载', fmtNum(t.downloaded), t.downloaded ? 'm-ok' : '']);
-    metrics.push(['跳过', fmtNum(t.skipped), '']);
-    metrics.push(['失败', fmtNum(t.failed), t.failed ? 'm-bad' : '']);
-    metrics.push(['记录', fmtNum(t.records), '']);
-    $('.task-metrics', el).innerHTML = metrics.map(([k, v, c]) => `<span class="${c}"><em>${k}</em><b>${v}</b></span>`).join('');
+    if (job.status === 'running' && pct !== null) metrics.push([t('task.mPct'), `${Math.floor(pct)}%`, 'm-pct']);
+    metrics.push([t('task.mDown'), fmtNum(tot.downloaded), tot.downloaded ? 'm-ok' : '']);
+    metrics.push([t('task.mSkip'), fmtNum(tot.skipped), '']);
+    metrics.push([t('task.mFail'), fmtNum(tot.failed), tot.failed ? 'm-bad' : '']);
+    metrics.push([t('task.mRec'), fmtNum(tot.records), '']);
+    $('.task-metrics', el).innerHTML = metrics.map(([k, v, c]) => `<span class="${c}"><em>${esc(k)}</em><b>${v}</b></span>`).join('');
 
     const msgEl = $('.task-message', el);
     let msg = '';
@@ -438,7 +503,10 @@
     $('.task-results', el).innerHTML = job.targets.length > 1
       ? job.targets.map((tg, i) => {
         const r = job.results[i];
-        if (r) return `<span class="result ${r.success ? 'ok' : 'bad'}" title="${esc(r.error || `下载 ${r.downloaded} · 跳过 ${r.skipped} · 失败 ${r.failed} · ${r.elapsed_seconds}s`)}">${icon(r.success ? 'check' : 'x')}${esc(tg)}</span>`;
+        if (r) {
+          const tip = r.error || t('task.resultTip', { d: r.downloaded, s: r.skipped, f: r.failed, t: r.elapsed_seconds });
+          return `<span class="result ${r.success ? 'ok' : 'bad'}" title="${esc(tip)}">${icon(r.success ? 'check' : 'x')}${esc(tg)}</span>`;
+        }
         if (job.status === 'running' && i === job.current_index) return `<span class="result current"><span class="spinner"></span>${esc(tg)}</span>`;
         return `<span class="result pending">${esc(tg)}</span>`;
       }).join('')
@@ -449,7 +517,11 @@
     $('.act-retry', el).classList.toggle('hidden', !final);
     $('.act-delete', el).classList.toggle('hidden', !final);
     $('.act-open', el).classList.toggle('hidden', !job.results.some((r) => r.save_dir));
-    $('.act-logs', el).title = `日志${job.log_count ? `（${job.log_count}）` : ''}`;
+    $('.act-open', el).title = t('task.actOpen');
+    $('.act-retry', el).title = t('task.actRetry');
+    $('.act-cancel', el).title = t('task.actCancel');
+    $('.act-delete', el).title = t('task.actDelete');
+    $('.act-logs', el).title = job.log_count ? t('task.actLogsCount', { n: job.log_count }) : t('task.actLogs');
   }
 
   function upsertJob(job) {
@@ -458,9 +530,15 @@
     state.jobs.set(job.id, job);
     renderJob(job);
     if (prev && !FINAL.has(prev.status) && FINAL.has(job.status)) {
-      const t = job.totals;
+      const tot = job.totals;
       const type = job.status === 'done' ? 'success' : job.status === 'failed' ? 'error' : 'warn';
-      toast(`${STATUS_LABEL[job.status]} · ${job.title}（下载 ${t.downloaded}，跳过 ${t.skipped}，失败 ${t.failed}）`, type, 6000);
+      toast(t('toast.jobFinished', {
+        status: statusLabel(job.status),
+        title: job.title,
+        d: tot.downloaded,
+        s: tot.skipped,
+        f: tot.failed,
+      }), type, 6000);
     }
     renderTaskOverview();
   }
@@ -481,12 +559,12 @@
     badge.textContent = running + queued;
     badge.classList.toggle('hidden', running + queued === 0);
     $('#stats-bar').innerHTML = [
-      ['进行中', `${running}<span style="color:var(--text-3);font-weight:500"> / ${queued} 排队</span>`, 'var(--accent)'],
-      ['已下载', fmtNum(sum('downloaded')), 'var(--success)'],
-      ['已跳过', fmtNum(sum('skipped')), 'var(--text-3)'],
-      ['失败', fmtNum(sum('failed')), 'var(--danger)'],
-      ['API 调用', fmtNum(sum('api_calls')), 'var(--info)'],
-    ].map(([k, v, c]) => `<div class="metric"><div class="metric-label"><i style="background:${c}"></i>${k}</div><div class="metric-value">${v}</div></div>`).join('');
+      [t('tasks.statActive'), `${running}<span style="color:var(--text-3);font-weight:500"> ${esc(t('tasks.statQueued', { n: queued }))}</span>`, 'var(--accent)'],
+      [t('tasks.statDownloaded'), fmtNum(sum('downloaded')), 'var(--success)'],
+      [t('tasks.statSkipped'), fmtNum(sum('skipped')), 'var(--text-3)'],
+      [t('tasks.statFailed'), fmtNum(sum('failed')), 'var(--danger)'],
+      [t('tasks.statApi'), fmtNum(sum('api_calls')), 'var(--info)'],
+    ].map(([k, v, c]) => `<div class="metric"><div class="metric-label"><i style="background:${c}"></i>${esc(k)}</div><div class="metric-value">${v}</div></div>`).join('');
     const visible = jobs.filter(jobMatchesFilter).length;
     $('#task-empty').classList.toggle('hidden', visible > 0);
     taskList.classList.toggle('hidden', visible === 0);
@@ -501,7 +579,7 @@
     const line = (l) => `<div class="log-line ${esc(l.level)}"><span class="t">${fmtClock(l.t)}</span>${esc(l.msg)}</div>`;
     if (full) {
       const arr = state.logs.get(id) || [];
-      box.innerHTML = arr.length ? arr.map(line).join('') : '<div class="log-empty">暂无日志</div>';
+      box.innerHTML = arr.length ? arr.map(line).join('') : `<div class="log-empty">${esc(t('task.logEmpty'))}</div>`;
     } else if (newLines) {
       $('.log-empty', box)?.remove();
       box.insertAdjacentHTML('beforeend', newLines.map(line).join(''));
@@ -519,7 +597,7 @@
     try {
       const r = await api('/api/tasks/clear', { method: 'POST' });
       [...state.jobs.values()].filter((j) => FINAL.has(j.status)).forEach((j) => removeJob(j.id));
-      toast(`已清除 ${r.removed} 个任务`);
+      toast(t('toast.clearedTasks', { n: r.removed }));
     } catch (e) { toast(e.message, 'error'); }
   });
 
@@ -533,9 +611,8 @@
   // ------------------------------------------------------------------ SSE
   function connectEvents() {
     const es = new EventSource('/api/events');
-    const setConn = (ok, text) => { $('#conn-dot').className = `live-dot ${ok ? 'ok' : 'bad'}`; $('#conn-text').textContent = text; };
-    es.onopen = () => setConn(true, '实时');
-    es.onerror = () => setConn(false, '重连中…');
+    es.onopen = () => { state.connState = 'live'; renderConn(); };
+    es.onerror = () => { state.connState = 'retry'; renderConn(); };
     es.addEventListener('snapshot', (e) => {
       const jobs = JSON.parse(e.data);
       const ids = new Set(jobs.map((j) => j.id));
@@ -572,29 +649,34 @@
     if (!inFolder) $('#gallery-more').classList.add('hidden');
   }
 
+  function renderGalleryFolders(data) {
+    const grid = $('#folder-grid');
+    $('#gallery-sub').textContent = t('gallery.foldersCount', { n: data.folders.length });
+    $('#gallery-sub').title = data.root;
+    grid.innerHTML = data.folders.map((f) => `
+      <div class="folder" data-folder="${esc(f.name)}">
+        ${f.cover
+          ? `<div class="folder-cover"><img loading="lazy" src="${thumbUrl(f.name, f.cover)}" alt="" /></div>`
+          : `<div class="folder-cover placeholder"><div class="ph"><span class="ph-icon">${icon(f.videos ? 'video' : 'file')}</span>${esc(f.videos ? t('gallery.videosCount', { n: fmtNum(f.videos) }) : t('gallery.docsCount', { n: fmtNum(f.docs) }))}</div></div>`}
+        <div class="folder-info">
+          <div class="folder-name" title="${esc(f.name)}">${esc(f.name)}</div>
+          <div class="folder-meta">
+            ${f.images ? `<span>${icon('image')}${fmtNum(f.images)}</span>` : ''}
+            ${f.videos ? `<span>${icon('video')}${fmtNum(f.videos)}</span>` : ''}
+            ${f.docs ? `<span>${icon('file')}${fmtNum(f.docs)}</span>` : ''}
+          </div>
+        </div>
+      </div>`).join('');
+    $('#gallery-empty').classList.toggle('hidden', data.folders.length > 0);
+  }
+
   async function loadGallery() {
     if (G.folder) return loadFolder(true);
     setGalleryMode(false);
-    const grid = $('#folder-grid');
     try {
       const data = await api('/api/gallery');
-      $('#gallery-sub').textContent = `${data.folders.length} 个文件夹`;
-      $('#gallery-sub').title = data.root;
-      grid.innerHTML = data.folders.map((f) => `
-        <div class="folder" data-folder="${esc(f.name)}">
-          ${f.cover
-            ? `<div class="folder-cover"><img loading="lazy" src="${thumbUrl(f.name, f.cover)}" alt="" /></div>`
-            : `<div class="folder-cover placeholder"><div class="ph"><span class="ph-icon">${icon(f.videos ? 'video' : 'file')}</span>${f.videos ? `${fmtNum(f.videos)} 个视频` : `${fmtNum(f.docs)} 个文档`}</div></div>`}
-          <div class="folder-info">
-            <div class="folder-name" title="${esc(f.name)}">${esc(f.name)}</div>
-            <div class="folder-meta">
-              ${f.images ? `<span>${icon('image')}${fmtNum(f.images)}</span>` : ''}
-              ${f.videos ? `<span>${icon('video')}${fmtNum(f.videos)}</span>` : ''}
-              ${f.docs ? `<span>${icon('file')}${fmtNum(f.docs)}</span>` : ''}
-            </div>
-          </div>
-        </div>`).join('');
-      $('#gallery-empty').classList.toggle('hidden', data.folders.length > 0);
+      G.foldersData = data;
+      renderGalleryFolders(data);
     } catch (e) { toast(e.message, 'error'); }
   }
 
@@ -617,7 +699,7 @@
       const start = G.items.length;
       G.items.push(...data.items);
       G.offset += data.items.length;
-      $('#gallery-sub').textContent = `${fmtNum(data.total)} 个文件`;
+      $('#gallery-sub').textContent = t('gallery.filesCount', { n: fmtNum(data.total) });
       grid.insertAdjacentHTML('beforeend', data.items.map((it, i) => tileHtml(it, start + i)).join(''));
       $$('img:not([data-bound]), video:not([data-bound])', grid).forEach((m) => {
         m.dataset.bound = '1';
@@ -638,13 +720,13 @@
   function tileHtml(it, idx) {
     const cap = `<div class="tile-cap">${esc(it.name)}</div>`;
     if (it.type === 'image') return `<div class="tile" data-idx="${idx}"><img loading="lazy" decoding="async" src="${thumbUrl(G.folder, it.name)}" alt="" />${cap}</div>`;
-    if (it.type === 'video') return `<div class="tile" data-idx="${idx}"><video preload="metadata" muted src="${mediaUrl(G.folder, it.name)}#t=0.1"></video><span class="tile-badge">${icon('video')}视频</span>${cap}</div>`;
+    if (it.type === 'video') return `<div class="tile" data-idx="${idx}"><video preload="metadata" muted src="${mediaUrl(G.folder, it.name)}#t=0.1"></video><span class="tile-badge">${icon('video')}${esc(t('gallery.videoBadge'))}</span>${cap}</div>`;
     return `<div class="tile doc" data-idx="${idx}">${icon('file')}<div class="doc-name">${esc(it.name)}</div><div class="doc-size">${fmtSize(it.size)}</div></div>`;
   }
 
   $('#media-grid').addEventListener('click', (e) => {
-    const t = e.target.closest('.tile');
-    if (t) openLightbox(Number(t.dataset.idx));
+    const tile = e.target.closest('.tile');
+    if (tile) openLightbox(Number(tile.dataset.idx));
   });
   $('#gallery-more button').addEventListener('click', () => loadFolder(false));
   $('#crumb-gallery').addEventListener('click', () => { G.folder = null; loadGallery(); });
@@ -668,11 +750,11 @@
     if (it.type === 'image') stage.innerHTML = `<img src="${url}" alt="" />`;
     else if (it.type === 'video') stage.innerHTML = `<video src="${url}" controls autoplay></video>`;
     else {
-      stage.innerHTML = '<pre>加载中…</pre>';
+      stage.innerHTML = `<pre>${esc(t('lb.loading'))}</pre>`;
       try {
         const txt = await (await fetch(url)).text();
-        stage.innerHTML = `<pre>${esc(txt.length > 200000 ? `${txt.slice(0, 200000)}\n\n…（已截断）` : txt)}</pre>`;
-      } catch (_) { stage.innerHTML = '<pre>读取失败</pre>'; }
+        stage.innerHTML = `<pre>${esc(txt.length > 200000 ? `${txt.slice(0, 200000)}\n\n${t('lb.truncated')}` : txt)}</pre>`;
+      } catch (_) { stage.innerHTML = `<pre>${esc(t('lb.readFail'))}</pre>`; }
     }
     $('#lb-caption').textContent = `${idx + 1} / ${G.total}  ·  ${it.name}  ·  ${fmtSize(it.size)}`;
     $('#lightbox').classList.remove('hidden');
@@ -701,11 +783,11 @@
   const usersInput = $('input', usersBox);
 
   function renderUsers() {
-    $$('.chip', usersBox).forEach((t) => t.remove());
+    $$('.chip', usersBox).forEach((el) => el.remove());
     state.users.forEach((u, i) => {
       const chip = document.createElement('span');
       chip.className = 'chip';
-      chip.innerHTML = `${esc(u)}<button type="button" title="移除">${icon('x')}</button>`;
+      chip.innerHTML = `${esc(u)}<button type="button" title="${esc(t('settings.removeUser'))}">${icon('x')}</button>`;
       $('button', chip).addEventListener('click', (e) => { e.stopPropagation(); state.users.splice(i, 1); renderUsers(); updateDirty(); });
       usersBox.insertBefore(chip, usersInput);
     });
@@ -759,6 +841,15 @@
     vr.innerHTML = ok === null ? `<span class="spinner"></span><span>${esc(msg)}</span>` : `${icon(ok ? 'check-circle' : 'x-circle')}<span>${esc(msg)}</span>`;
   }
 
+  function renderVerifyState() {
+    const vs = state.verifyState;
+    if (!vs) return;
+    if (vs.mode === 'loading') setVerify(null, t('settings.verifying'));
+    else if (vs.mode === 'status') setVerify(vs.status.ok, formatCookieStatus(vs.status));
+    else if (vs.mode === 'verified') setVerify(true, t('settings.verifyOk', { user: vs.user }));
+    else setVerify(vs.ok, vs.msg);
+  }
+
   function fillSettings() {
     const c = state.cfg?.config;
     if (!c) return;
@@ -777,8 +868,8 @@
     renderUsers();
     state.settingsSnapshot = JSON.stringify(collectSettings());
     updateDirty();
-    const st = state.cfg.cookie_status;
-    setVerify(st.ok, st.message);
+    state.verifyState = { mode: 'status', status: state.cfg.cookie_status };
+    renderVerifyState();
     if (state.cfg.thumb_cache) renderThumbCache(state.cfg.thumb_cache);
   }
 
@@ -786,8 +877,8 @@
     const files = Number(info?.files || 0);
     const bytes = Number(info?.bytes || 0);
     $('#thumb-cache-info').textContent = files
-      ? `当前已缓存 ${fmtNum(files)} 个缩略图 · 占用 ${fmtSize(bytes)}`
-      : '当前暂无缩略图缓存';
+      ? t('settings.thumbStats', { files: fmtNum(files), size: fmtSize(bytes) })
+      : t('settings.thumbEmpty');
     $('#btn-clear-thumbs').disabled = files === 0;
   }
 
@@ -810,13 +901,13 @@
     commitUserInput();
     const body = collectSettings();
     if (body.advanced.time_range && !/^(\d{4}-\d{2}-\d{2})?:(\d{4}-\d{2}-\d{2})?$/.test(body.advanced.time_range)) {
-      toast('默认时间范围格式应为 YYYY-MM-DD:YYYY-MM-DD', 'warn');
+      toast(t('toast.invalidTimeRange'), 'warn');
       return;
     }
     try {
       state.cfg = await api('/api/config', { method: 'PUT', body });
       renderStatus(); renderEffectiveOpts(); fillSettings();
-      toast('设置已保存', 'success');
+      toast(t('toast.settingsSaved'), 'success');
     } catch (e) { toast(e.message, 'error'); }
   });
   document.addEventListener('keydown', (e) => {
@@ -834,13 +925,14 @@
       const content = await file.text();
       state.cfg = await api('/api/cookie/upload', { method: 'POST', body: { content, filename: 'cookies.txt' } });
       renderStatus(); fillSettings();
-      toast('Cookie 已保存为 cookies.txt', 'success');
+      toast(t('toast.cookieUploaded'), 'success');
     } catch (err) { toast(err.message, 'error'); }
     e.target.value = '';
   });
 
   $('#btn-verify').addEventListener('click', async () => {
-    setVerify(null, '正在连接 X 校验…');
+    state.verifyState = { mode: 'loading' };
+    renderVerifyState();
     try {
       const r = await api('/api/cookie/verify', {
         method: 'POST',
@@ -849,8 +941,16 @@
           proxy: sform.proxy.value.trim(),
         },
       });
-      setVerify(r.ok, r.message);
-    } catch (e) { setVerify(false, e.message); }
+      if (r.ok && r.profile?.screen_name) {
+        state.verifyState = { mode: 'verified', user: r.profile.screen_name };
+      } else {
+        state.verifyState = { mode: 'raw', ok: r.ok, msg: r.message };
+      }
+      renderVerifyState();
+    } catch (e) {
+      state.verifyState = { mode: 'raw', ok: false, msg: e.message };
+      renderVerifyState();
+    }
   });
 
   $('#btn-clear-thumbs').addEventListener('click', async () => {
@@ -860,9 +960,9 @@
       const r = await api('/api/cache/thumbs/clear', { method: 'POST' });
       if (state.cfg) state.cfg.thumb_cache = r.thumb_cache;
       renderThumbCache(r.thumb_cache);
-      toast(`已清理 ${fmtNum(r.cleared_files)} 个缩略图缓存，释放 ${fmtSize(r.cleared_bytes)}`, 'success');
+      toast(t('toast.cacheCleared', { files: fmtNum(r.cleared_files), size: fmtSize(r.cleared_bytes) }), 'success');
     } catch (e) {
-      toast(`清理缓存失败：${e.message}`, 'error');
+      toast(t('toast.cacheClearFail', { msg: e.message }), 'error');
       loadThumbCache();
     }
   });
@@ -888,6 +988,8 @@
   });
 
   // ------------------------------------------------------------------ boot
+  applyLang(I18N.getLang(), false);
+  renderConn();
   setType('user_media');
   renderTaskOverview();
   loadConfig();

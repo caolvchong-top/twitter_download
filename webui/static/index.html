@@ -73,40 +73,46 @@
         <div class="brand-name">X Downloader</div>
       </div>
 
-      <div class="nav-label">工作区</div>
+      <div class="nav-label" data-i18n="nav.workspace">工作区</div>
       <nav class="nav">
-        <button class="nav-item active" data-view="new" title="新建任务" aria-label="新建任务">
-          <svg><use href="#i-plus"/></svg><span class="nav-text">新建任务</span>
+        <button class="nav-item active" data-view="new" data-i18n-title="nav.new" data-i18n-aria="nav.new" title="新建任务" aria-label="新建任务">
+          <svg><use href="#i-plus"/></svg><span class="nav-text" data-i18n="nav.new">新建任务</span>
         </button>
-        <button class="nav-item" data-view="tasks" title="任务队列" aria-label="任务队列">
-          <svg><use href="#i-list"/></svg><span class="nav-text">任务队列</span><span class="nav-count hidden" id="badge-running">0</span>
+        <button class="nav-item" data-view="tasks" data-i18n-title="nav.tasks" data-i18n-aria="nav.tasks" title="任务队列" aria-label="任务队列">
+          <svg><use href="#i-list"/></svg><span class="nav-text" data-i18n="nav.tasks">任务队列</span><span class="nav-count hidden" id="badge-running">0</span>
         </button>
-        <button class="nav-item" data-view="gallery" title="本地图库" aria-label="本地图库">
-          <svg><use href="#i-image"/></svg><span class="nav-text">本地图库</span>
+        <button class="nav-item" data-view="gallery" data-i18n-title="nav.gallery" data-i18n-aria="nav.gallery" title="本地图库" aria-label="本地图库">
+          <svg><use href="#i-image"/></svg><span class="nav-text" data-i18n="nav.gallery">本地图库</span>
         </button>
-        <button class="nav-item" data-view="settings" title="设置" aria-label="设置">
-          <svg><use href="#i-settings"/></svg><span class="nav-text">设置</span>
+        <button class="nav-item" data-view="settings" data-i18n-title="nav.settings" data-i18n-aria="nav.settings" title="设置" aria-label="设置">
+          <svg><use href="#i-settings"/></svg><span class="nav-text" data-i18n="nav.settings">设置</span>
         </button>
       </nav>
 
       <div class="sidebar-footer">
-        <button class="account" id="cookie-card" title="前往设置">
+        <button class="account" id="cookie-card" data-i18n-title="sidebar.gotoSettings" title="前往设置">
           <span class="status-dot" id="cookie-dot"></span>
           <span class="account-text">
-            <span class="account-title" id="cookie-text">检测中…</span>
-            <span class="account-sub">Cookie 状态</span>
+            <span class="account-title" id="cookie-text" data-i18n="sidebar.cookieChecking">检测中…</span>
+            <span class="account-sub" data-i18n="sidebar.cookieSub">Cookie 状态</span>
           </span>
           <svg class="account-chev"><use href="#i-chevron-right"/></svg>
         </button>
         <dl class="env">
-          <div><dt>保存至</dt><dd id="save-root">-</dd></div>
-          <div><dt>代理</dt><dd id="proxy-text">-</dd></div>
-          <div><dt>连接</dt><dd class="row"><span class="live-dot" id="conn-dot"></span><span id="conn-text">连接中</span></dd></div>
+          <div><dt data-i18n="sidebar.saveRoot">保存至</dt><dd id="save-root">-</dd></div>
+          <div><dt data-i18n="sidebar.proxy">代理</dt><dd id="proxy-text">-</dd></div>
+          <div><dt data-i18n="sidebar.conn">连接</dt><dd class="row"><span class="live-dot" id="conn-dot"></span><span id="conn-text" data-i18n="sidebar.connInit">连接中</span></dd></div>
         </dl>
-        <div class="theme-switch" id="theme-switch" role="radiogroup" aria-label="主题">
-          <button data-theme-value="light" title="浅色"><svg><use href="#i-sun"/></svg></button>
-          <button data-theme-value="system" title="跟随系统"><svg><use href="#i-monitor"/></svg></button>
-          <button data-theme-value="dark" title="深色"><svg><use href="#i-moon"/></svg></button>
+        <div class="footer-controls">
+          <div class="theme-switch" id="theme-switch" role="radiogroup" data-i18n-aria="theme.label" aria-label="主题">
+            <button data-theme-value="light" data-i18n-title="theme.light" title="浅色"><svg><use href="#i-sun"/></svg></button>
+            <button data-theme-value="system" data-i18n-title="theme.system" title="跟随系统"><svg><use href="#i-monitor"/></svg></button>
+            <button data-theme-value="dark" data-i18n-title="theme.dark" title="深色"><svg><use href="#i-moon"/></svg></button>
+          </div>
+          <div class="lang-switch" id="lang-switch" role="radiogroup" data-i18n-aria="lang.label" aria-label="语言">
+            <button type="button" data-lang-value="zh" title="简体中文">中</button>
+            <button type="button" data-lang-value="en" title="English">EN</button>
+          </div>
         </div>
       </div>
     </aside>
@@ -117,29 +123,29 @@
       <!-- ===== New task ===== -->
       <section class="view active" id="view-new">
         <header class="topbar">
-          <div class="crumbs"><span class="crumb-strong">新建任务</span></div>
+          <div class="crumbs"><span class="crumb-strong" data-i18n="new.title">新建任务</span></div>
           <div class="topbar-actions">
-            <button class="btn" id="btn-batch" title="按设置中的批量用户列表与默认模式运行">
-              <svg><use href="#i-layers"/></svg>一键批量运行
+            <button class="btn" id="btn-batch" data-i18n-title="new.batchTitle" title="按设置中的批量用户列表与默认模式运行">
+              <svg><use href="#i-layers"/></svg><span data-i18n="new.batchBtn">一键批量运行</span>
             </button>
           </div>
         </header>
 
         <div class="content">
           <div class="hero">
-            <h1>下载什么？</h1>
-            <p>选择类型并填写目标，任务会进入队列执行，进度与日志实时更新。</p>
+            <h1 data-i18n="new.heroTitle">下载什么？</h1>
+            <p data-i18n="new.heroSub">选择类型并填写目标，任务会进入队列执行，进度与日志实时更新。</p>
           </div>
 
           <div class="new-layout">
             <div class="panel">
               <div class="tabs" id="type-tabs" role="tablist">
-                <button class="tab active" data-type="user_media"><svg><use href="#i-images"/></svg>用户媒体</button>
-                <button class="tab" data-type="tweet"><svg><use href="#i-link"/></svg>单条推文</button>
-                <button class="tab" data-type="search"><svg><use href="#i-hash"/></svg>标签搜索</button>
-                <button class="tab" data-type="replies"><svg><use href="#i-message"/></svg>评论区</button>
-                <button class="tab" data-type="user_text"><svg><use href="#i-file"/></svg>纯文本</button>
-                <button class="tab" data-type="profile"><svg><use href="#i-user"/></svg>主页资料</button>
+                <button class="tab active" data-type="user_media"><svg><use href="#i-images"/></svg><span data-i18n="type.user_media">用户媒体</span></button>
+                <button class="tab" data-type="tweet"><svg><use href="#i-link"/></svg><span data-i18n="type.tweet">单条推文</span></button>
+                <button class="tab" data-type="search"><svg><use href="#i-hash"/></svg><span data-i18n="type.search">标签搜索</span></button>
+                <button class="tab" data-type="replies"><svg><use href="#i-message"/></svg><span data-i18n="type.replies">评论区</span></button>
+                <button class="tab" data-type="user_text"><svg><use href="#i-file"/></svg><span data-i18n="type.user_text">纯文本</span></button>
+                <button class="tab" data-type="profile"><svg><use href="#i-user"/></svg><span data-i18n="type.profile">主页资料</span></button>
               </div>
 
               <form id="task-form" autocomplete="off">
@@ -147,81 +153,81 @@
                   <p class="type-desc" id="type-desc"></p>
 
                   <div class="field" data-for="user_media user_text profile">
-                    <div class="label-row"><label>用户名</label><span class="hint">逗号或换行分隔，可带 @</span></div>
+                    <div class="label-row"><label data-i18n="field.users">用户名</label><span class="hint" data-i18n="field.usersHint">逗号或换行分隔，可带 @</span></div>
                     <textarea name="targets_users" rows="3" placeholder="lilmonix3, matchach"></textarea>
                   </div>
                   <div class="field" data-for="tweet">
-                    <div class="label-row"><label>推文链接或 ID</label><span class="hint">每行一个</span></div>
+                    <div class="label-row"><label data-i18n="field.tweets">推文链接或 ID</label><span class="hint" data-i18n="field.tweetsHint">每行一个</span></div>
                     <textarea name="targets_tweets" rows="4" placeholder="https://x.com/username/status/1234567890"></textarea>
                   </div>
                   <div class="field" data-for="replies">
-                    <div class="label-row"><label>推文链接或 @用户名</label><span class="hint">用户名将抓取其推文下的评论</span></div>
+                    <div class="label-row"><label data-i18n="field.replies">推文链接或 @用户名</label><span class="hint" data-i18n="field.repliesHint">用户名将抓取其推文下的评论</span></div>
                     <textarea name="targets_replies" rows="3" placeholder="https://x.com/username/status/1234567890&#10;@someone"></textarea>
                   </div>
 
                   <div class="field" data-for="user_media">
-                    <div class="label-row"><label>下载模式</label></div>
+                    <div class="label-row"><label data-i18n="field.mode">下载模式</label></div>
                     <div class="segmented" data-name="mode">
-                      <button type="button" data-value="media" class="active">仅本人媒体</button>
-                      <button type="button" data-value="retweet">含转推</button>
-                      <button type="button" data-value="highlights">亮点</button>
-                      <button type="button" data-value="likes">喜欢</button>
+                      <button type="button" data-value="media" class="active" data-i18n="mode.media">仅本人媒体</button>
+                      <button type="button" data-value="retweet" data-i18n="mode.retweet">含转推</button>
+                      <button type="button" data-value="highlights" data-i18n="mode.highlights">亮点</button>
+                      <button type="button" data-value="likes" data-i18n="mode.likes">喜欢</button>
                     </div>
-                    <div class="note" id="likes-hint" hidden><svg><use href="#i-alert"/></svg>「喜欢」仅能获取当前登录账号本人的列表，且不支持时间范围。</div>
+                    <div class="note" id="likes-hint" hidden><svg><use href="#i-alert"/></svg><span data-i18n="field.likesHint">「喜欢」仅能获取当前登录账号本人的列表，且不支持时间范围。</span></div>
                   </div>
 
                   <div class="grid-2" data-for="search">
                     <div class="field">
-                      <div class="label-row"><label>标签 / 关键词</label></div>
+                      <div class="label-row"><label data-i18n="field.tag">标签 / 关键词</label></div>
                       <input name="tag" placeholder="#ヨルクラ" />
                     </div>
                     <div class="field">
-                      <div class="label-row"><label>高级搜索条件</label><span class="hint">可选</span></div>
+                      <div class="label-row"><label data-i18n="field.filter">高级搜索条件</label><span class="hint" data-i18n="field.optional">可选</span></div>
                       <input name="filter" placeholder="from:user min_faves:100" />
                     </div>
                   </div>
                   <div class="grid-2" data-for="search">
                     <div class="field">
-                      <div class="label-row"><label>结果类型</label></div>
+                      <div class="label-row"><label data-i18n="field.searchMode">结果类型</label></div>
                       <div class="segmented" data-name="search_mode">
-                        <button type="button" data-value="media" class="active">热门媒体</button>
-                        <button type="button" data-value="media_latest">最新媒体</button>
-                        <button type="button" data-value="text">纯文本</button>
+                        <button type="button" data-value="media" class="active" data-i18n="searchMode.media">热门媒体</button>
+                        <button type="button" data-value="media_latest" data-i18n="searchMode.media_latest">最新媒体</button>
+                        <button type="button" data-value="text" data-i18n="searchMode.text">纯文本</button>
                       </div>
                     </div>
                     <div class="field">
-                      <div class="label-row"><label>抓取上限</label><span class="hint">推文数</span></div>
+                      <div class="label-row"><label data-i18n="field.limit">抓取上限</label><span class="hint" data-i18n="field.limitHint">推文数</span></div>
                       <input name="limit" type="number" min="1" value="100" />
                     </div>
                   </div>
 
                   <div class="field" data-for="user_media user_text replies" id="field-time">
-                    <div class="label-row"><label>时间范围</label><span class="hint">留空不限</span></div>
+                    <div class="label-row"><label data-i18n="field.timeRange">时间范围</label><span class="hint" data-i18n="field.timeRangeHint">留空不限</span></div>
                     <div class="date-range">
                       <div class="input-icon"><svg><use href="#i-calendar"/></svg><input type="date" name="time_start" /></div>
                       <span class="range-sep">→</span>
                       <div class="input-icon"><svg><use href="#i-calendar"/></svg><input type="date" name="time_end" /></div>
                       <div class="quick">
-                        <button type="button" data-range="7">7 天</button>
-                        <button type="button" data-range="30">30 天</button>
-                        <button type="button" data-range="365">1 年</button>
-                        <button type="button" data-range="0">不限</button>
+                        <button type="button" data-range="7" data-i18n="range.7">7 天</button>
+                        <button type="button" data-range="30" data-i18n="range.30">30 天</button>
+                        <button type="button" data-range="365" data-i18n="range.365">1 年</button>
+                        <button type="button" data-range="0" data-i18n="range.0">不限</button>
                       </div>
                     </div>
                   </div>
 
                   <div class="field" data-for="user_text">
-                    <label class="switch"><input type="checkbox" name="include_retweet" /><span class="track"></span><span>包含转推</span></label>
+                    <label class="switch"><input type="checkbox" name="include_retweet" /><span class="track"></span><span data-i18n="field.includeRetweet">包含转推</span></label>
                   </div>
                   <div class="field" data-for="replies">
-                    <label class="switch"><input type="checkbox" name="media_down" checked /><span class="track"></span><span>同时下载评论区图片与视频</span></label>
+                    <label class="switch"><input type="checkbox" name="media_down" checked /><span class="track"></span><span data-i18n="field.mediaDown">同时下载评论区图片与视频</span></label>
                   </div>
                 </div>
 
                 <div class="panel-footer">
                   <span class="summary" id="form-summary"></span>
                   <button type="submit" class="btn btn-primary" id="btn-submit">
-                    <svg><use href="#i-download"/></svg>开始下载<kbd>Ctrl ↵</kbd>
+                    <svg><use href="#i-download"/></svg><span data-i18n="new.submit">开始下载</span><kbd>Ctrl ↵</kbd>
                   </button>
                 </div>
               </form>
@@ -229,21 +235,21 @@
 
             <aside class="side">
               <div class="panel">
-                <div class="panel-head"><span>账号预览</span></div>
+                <div class="panel-head"><span data-i18n="preview.title">账号预览</span></div>
                 <div class="panel-body">
                   <div class="search-box">
                     <svg><use href="#i-search"/></svg>
-                    <input id="preview-name" placeholder="输入用户名预览" />
-                    <button class="btn btn-sm" id="btn-preview" type="button">查看</button>
+                    <input id="preview-name" data-i18n-placeholder="preview.placeholder" placeholder="输入用户名预览" />
+                    <button class="btn btn-sm" id="btn-preview" type="button" data-i18n="preview.btn">查看</button>
                   </div>
                   <div id="preview-area" class="preview-placeholder">
                     <svg><use href="#i-user"/></svg>
-                    <span>查看账号资料，同时在线校验 Cookie</span>
+                    <span data-i18n="preview.empty">查看账号资料，同时在线校验 Cookie</span>
                   </div>
                 </div>
               </div>
               <div class="panel">
-                <div class="panel-head"><span>当前下载选项</span><button class="link" data-goto="settings" type="button">修改</button></div>
+                <div class="panel-head"><span data-i18n="opts.title">当前下载选项</span><button class="link" data-goto="settings" type="button" data-i18n="opts.edit">修改</button></div>
                 <dl class="kv" id="effective-opts"></dl>
               </div>
             </aside>
@@ -254,15 +260,15 @@
       <!-- ===== Tasks ===== -->
       <section class="view" id="view-tasks">
         <header class="topbar">
-          <div class="crumbs"><span class="crumb-strong">任务队列</span></div>
+          <div class="crumbs"><span class="crumb-strong" data-i18n="tasks.title">任务队列</span></div>
           <div class="topbar-actions">
             <div class="segmented segmented-sm" id="task-filter">
-              <button data-value="all" class="active">全部</button>
-              <button data-value="active">进行中</button>
-              <button data-value="done">已完成</button>
-              <button data-value="failed">失败</button>
+              <button data-value="all" class="active" data-i18n="tasks.filterAll">全部</button>
+              <button data-value="active" data-i18n="tasks.filterActive">进行中</button>
+              <button data-value="done" data-i18n="tasks.filterDone">已完成</button>
+              <button data-value="failed" data-i18n="tasks.filterFailed">失败</button>
             </div>
-            <button class="btn btn-sm" id="btn-clear"><svg><use href="#i-trash"/></svg>清除已结束</button>
+            <button class="btn btn-sm" id="btn-clear"><svg><use href="#i-trash"/></svg><span data-i18n="tasks.clearBtn">清除已结束</span></button>
           </div>
         </header>
         <div class="content">
@@ -270,9 +276,9 @@
           <div class="task-list" id="task-list"></div>
           <div class="empty hidden" id="task-empty">
             <div class="empty-icon"><svg><use href="#i-inbox"/></svg></div>
-            <div class="empty-title">暂无任务</div>
-            <div class="empty-sub">创建的下载任务会显示在这里</div>
-            <button class="btn btn-primary btn-sm" data-goto="new"><svg><use href="#i-plus"/></svg>新建任务</button>
+            <div class="empty-title" data-i18n="tasks.emptyTitle">暂无任务</div>
+            <div class="empty-sub" data-i18n="tasks.emptySub">创建的下载任务会显示在这里</div>
+            <button class="btn btn-primary btn-sm" data-goto="new"><svg><use href="#i-plus"/></svg><span data-i18n="tasks.emptyAction">新建任务</span></button>
           </div>
         </div>
       </section>
@@ -281,34 +287,34 @@
       <section class="view" id="view-gallery">
         <header class="topbar">
           <div class="crumbs">
-            <button class="crumb" id="crumb-gallery">本地图库</button>
+            <button class="crumb" id="crumb-gallery" data-i18n="gallery.title">本地图库</button>
             <span class="crumb-sep hidden" id="crumb-sep"><svg><use href="#i-chevron-right"/></svg></span>
             <span class="crumb-strong hidden" id="crumb-folder"></span>
             <span class="crumb-meta" id="gallery-sub"></span>
           </div>
           <div class="topbar-actions">
             <div class="segmented segmented-sm hidden" id="gallery-kind">
-              <button data-value="media" class="active">全部媒体</button>
-              <button data-value="image">图片</button>
-              <button data-value="video">视频</button>
-              <button data-value="doc">文档</button>
+              <button data-value="media" class="active" data-i18n="gallery.kindMedia">全部媒体</button>
+              <button data-value="image" data-i18n="gallery.kindImage">图片</button>
+              <button data-value="video" data-i18n="gallery.kindVideo">视频</button>
+              <button data-value="doc" data-i18n="gallery.kindDoc">文档</button>
             </div>
             <div class="search-box search-box-sm hidden" id="gallery-search-box">
               <svg><use href="#i-search"/></svg>
-              <input id="gallery-search" placeholder="搜索文件名" />
+              <input id="gallery-search" data-i18n-placeholder="gallery.searchPh" placeholder="搜索文件名" />
             </div>
-            <button class="icon-btn" id="btn-gallery-open" title="在资源管理器中打开"><svg><use href="#i-folder-open"/></svg></button>
-            <button class="icon-btn" id="btn-gallery-refresh" title="刷新"><svg><use href="#i-refresh"/></svg></button>
+            <button class="icon-btn" id="btn-gallery-open" data-i18n-title="gallery.openTitle" title="在资源管理器中打开"><svg><use href="#i-folder-open"/></svg></button>
+            <button class="icon-btn" id="btn-gallery-refresh" data-i18n-title="gallery.refreshTitle" title="刷新"><svg><use href="#i-refresh"/></svg></button>
           </div>
         </header>
         <div class="content content-wide">
           <div id="folder-grid" class="folder-grid"></div>
           <div id="media-grid" class="media-grid hidden"></div>
-          <div class="load-more hidden" id="gallery-more"><button class="btn">加载更多</button></div>
+          <div class="load-more hidden" id="gallery-more"><button class="btn" data-i18n="gallery.loadMore">加载更多</button></div>
           <div class="empty hidden" id="gallery-empty">
             <div class="empty-icon"><svg><use href="#i-folder"/></svg></div>
-            <div class="empty-title">这里还没有内容</div>
-            <div class="empty-sub">下载完成的文件会按文件夹出现在这里</div>
+            <div class="empty-title" data-i18n="gallery.emptyTitle">这里还没有内容</div>
+            <div class="empty-sub" data-i18n="gallery.emptySub">下载完成的文件会按文件夹出现在这里</div>
           </div>
         </div>
       </section>
@@ -316,25 +322,25 @@
       <!-- ===== Settings ===== -->
       <section class="view" id="view-settings">
         <header class="topbar">
-          <div class="crumbs"><span class="crumb-strong">设置</span><span class="crumb-meta" id="settings-path"></span></div>
+          <div class="crumbs"><span class="crumb-strong" data-i18n="settings.title">设置</span><span class="crumb-meta" id="settings-path"></span></div>
           <div class="topbar-actions">
-            <span class="dirty hidden" id="dirty-flag">有未保存的更改</span>
-            <button class="btn" id="btn-reset-settings" disabled>撤销</button>
-            <button class="btn btn-primary" id="btn-save-settings" disabled><svg><use href="#i-check"/></svg>保存</button>
+            <span class="dirty hidden" id="dirty-flag" data-i18n="settings.dirty">有未保存的更改</span>
+            <button class="btn" id="btn-reset-settings" disabled data-i18n="settings.reset">撤销</button>
+            <button class="btn btn-primary" id="btn-save-settings" disabled><svg><use href="#i-check"/></svg><span data-i18n="settings.save">保存</span></button>
           </div>
         </header>
 
         <div class="content content-narrow">
           <form id="settings-form" autocomplete="off">
             <section class="setting-card">
-              <header><h2>账号</h2><p>用于访问 X 接口的登录凭证，等同于账号密码，请勿泄露。</p></header>
+              <header><h2 data-i18n="settings.accountTitle">账号</h2><p data-i18n="settings.accountSub">用于访问 X 接口的登录凭证，等同于账号密码，请勿泄露。</p></header>
               <div class="setting-row">
-                <div class="setting-label"><div>Cookie</div><p>cookies.txt 路径，或 <code>auth_token=…; ct0=…;</code></p></div>
+                <div class="setting-label"><div>Cookie</div><p data-i18n-html="settings.cookieDescHtml">cookies.txt 路径，或 <code>auth_token=…; ct0=…;</code></p></div>
                 <div class="setting-control">
                   <input name="cookie" placeholder="cookies.txt" />
                   <div class="btn-row">
-                    <label class="btn btn-sm file-btn"><svg><use href="#i-upload"/></svg>上传 cookies.txt<input type="file" accept=".txt" id="cookie-file" hidden /></label>
-                    <button type="button" class="btn btn-sm" id="btn-verify"><svg><use href="#i-shield"/></svg>在线校验</button>
+                    <label class="btn btn-sm file-btn"><svg><use href="#i-upload"/></svg><span data-i18n="settings.uploadCookie">上传 cookies.txt</span><input type="file" accept=".txt" id="cookie-file" hidden /></label>
+                    <button type="button" class="btn btn-sm" id="btn-verify"><svg><use href="#i-shield"/></svg><span data-i18n="settings.verifyCookie">在线校验</span></button>
                   </div>
                   <div class="verify" id="verify-result"></div>
                 </div>
@@ -342,96 +348,96 @@
             </section>
 
             <section class="setting-card">
-              <header><h2>批量下载</h2><p>「一键批量运行」使用的用户列表与默认参数。</p></header>
+              <header><h2 data-i18n="settings.batchTitle">批量下载</h2><p data-i18n="settings.batchSub">「一键批量运行」使用的用户列表与默认参数。</p></header>
               <div class="setting-row">
-                <div class="setting-label"><div>用户列表</div><p>回车或逗号添加</p></div>
-                <div class="setting-control"><div class="tag-input" id="users-input"><input placeholder="添加用户名…" /></div></div>
+                <div class="setting-label"><div data-i18n="settings.usersLabel">用户列表</div><p data-i18n="settings.usersSub">回车或逗号添加</p></div>
+                <div class="setting-control"><div class="tag-input" id="users-input"><input data-i18n-placeholder="settings.usersPh" placeholder="添加用户名…" /></div></div>
               </div>
               <div class="setting-row">
-                <div class="setting-label"><div>默认模式</div></div>
+                <div class="setting-label"><div data-i18n="settings.defaultMode">默认模式</div></div>
                 <div class="setting-control">
                   <div class="segmented segmented-sm" data-name="mode" id="set-mode">
-                    <button type="button" data-value="media">仅本人</button>
-                    <button type="button" data-value="retweet">含转推</button>
-                    <button type="button" data-value="highlights">亮点</button>
-                    <button type="button" data-value="likes">喜欢</button>
+                    <button type="button" data-value="media" data-i18n="modeShort.media">仅本人</button>
+                    <button type="button" data-value="retweet" data-i18n="modeShort.retweet">含转推</button>
+                    <button type="button" data-value="highlights" data-i18n="modeShort.highlights">亮点</button>
+                    <button type="button" data-value="likes" data-i18n="modeShort.likes">喜欢</button>
                   </div>
                 </div>
               </div>
               <div class="setting-row">
-                <div class="setting-label"><div>保存目录</div><p>留空则保存到项目根目录</p></div>
+                <div class="setting-label"><div data-i18n="settings.savePath">保存目录</div><p data-i18n="settings.savePathSub">留空则保存到项目根目录</p></div>
                 <div class="setting-control"><input name="save_path" placeholder="D:\Pictures\X" /></div>
               </div>
             </section>
 
             <section class="setting-card">
-              <header><h2>下载</h2><p>影响所有任务的下载行为。</p></header>
+              <header><h2 data-i18n="settings.downloadTitle">下载</h2><p data-i18n="settings.downloadSub">影响所有任务的下载行为。</p></header>
               <div class="setting-row">
-                <div class="setting-label"><div>图片格式</div><p>原图体积最小且无损；JPG / PNG 为 4096 转码</p></div>
+                <div class="setting-label"><div data-i18n="settings.imageFormat">图片格式</div><p data-i18n="settings.imageFormatSub">原图体积最小且无损；JPG / PNG 为 4096 转码</p></div>
                 <div class="setting-control">
                   <div class="segmented segmented-sm" data-name="image_format" id="set-format">
-                    <button type="button" data-value="orig">原图 orig</button>
+                    <button type="button" data-value="orig" data-i18n="settings.formatOrig">原图 orig</button>
                     <button type="button" data-value="jpg">JPG</button>
                     <button type="button" data-value="png">PNG</button>
                   </div>
                 </div>
               </div>
               <div class="setting-row">
-                <div class="setting-label"><div>默认时间范围</div><p>YYYY-MM-DD:YYYY-MM-DD</p></div>
+                <div class="setting-label"><div data-i18n="settings.timeRange">默认时间范围</div><p>YYYY-MM-DD:YYYY-MM-DD</p></div>
                 <div class="setting-control"><input name="time_range" placeholder="2024-01-01:2024-12-31" /></div>
               </div>
               <div class="setting-row">
-                <div class="setting-label"><div>并发下载数</div><p>过高可能导致连接失败</p></div>
+                <div class="setting-label"><div data-i18n="settings.concurrency">并发下载数</div><p data-i18n="settings.concurrencySub">过高可能导致连接失败</p></div>
                 <div class="setting-control range-row"><input type="range" name="concurrency" min="1" max="32" /><output id="concurrency-val">8</output></div>
               </div>
               <div class="setting-row">
-                <div class="setting-label"><div>下载视频 / GIF</div></div>
+                <div class="setting-label"><div data-i18n="settings.hasVideo">下载视频 / GIF</div></div>
                 <div class="setting-control end"><label class="switch"><input type="checkbox" name="has_video" /><span class="track"></span></label></div>
               </div>
               <div class="setting-row">
-                <div class="setting-label"><div>跳过已下载</div><p>根据记录与本地文件去重</p></div>
+                <div class="setting-label"><div data-i18n="settings.skipDownloaded">跳过已下载</div><p data-i18n="settings.skipDownloadedSub">根据记录与本地文件去重</p></div>
                 <div class="setting-control end"><label class="switch"><input type="checkbox" name="skip_downloaded" /><span class="track"></span></label></div>
               </div>
               <div class="setting-row">
-                <div class="setting-label"><div>生成 Markdown</div><p>额外输出带图片链接的记录</p></div>
+                <div class="setting-label"><div data-i18n="settings.mdOutput">生成 Markdown</div><p data-i18n="settings.mdOutputSub">额外输出带图片链接的记录</p></div>
                 <div class="setting-control end"><label class="switch"><input type="checkbox" name="md_output" /><span class="track"></span></label></div>
               </div>
               <div class="setting-row">
-                <div class="setting-label"><div>Markdown 单文件上限</div><p>每个 md 文件的媒体条数</p></div>
+                <div class="setting-label"><div data-i18n="settings.mdLimit">Markdown 单文件上限</div><p data-i18n="settings.mdLimitSub">每个 md 文件的媒体条数</p></div>
                 <div class="setting-control"><input name="media_count_limit" type="number" min="0" /></div>
               </div>
             </section>
 
             <section class="setting-card">
-              <header><h2>网络</h2><p>代理与限流处理策略。</p></header>
+              <header><h2 data-i18n="settings.networkTitle">网络</h2><p data-i18n="settings.networkSub">代理与限流处理策略。</p></header>
               <div class="setting-row">
-                <div class="setting-label"><div>代理</div><p>开着 VPN / 系统代理时留空即可；支持 http:// 与 socks5://</p></div>
+                <div class="setting-label"><div data-i18n="settings.proxyLabel">代理</div><p data-i18n="settings.proxySub">开着 VPN / 系统代理时留空即可；支持 http:// 与 socks5://</p></div>
                 <div class="setting-control"><input name="proxy" placeholder="http://127.0.0.1:7890" /></div>
               </div>
               <div class="setting-row">
-                <div class="setting-label"><div>限流自动等待</div><p>触发 429 时等待重置后继续</p></div>
+                <div class="setting-label"><div data-i18n="settings.waitRateLimit">限流自动等待</div><p data-i18n="settings.waitRateLimitSub">触发 429 时等待重置后继续</p></div>
                 <div class="setting-control end"><label class="switch"><input type="checkbox" name="wait_on_rate_limit" /><span class="track"></span></label></div>
               </div>
               <div class="setting-row">
-                <div class="setting-label"><div>逐文件日志</div><p>在任务日志中记录每个文件</p></div>
+                <div class="setting-label"><div data-i18n="settings.logOutput">逐文件日志</div><p data-i18n="settings.logOutputSub">在任务日志中记录每个文件</p></div>
                 <div class="setting-control end"><label class="switch"><input type="checkbox" name="log_output" /><span class="track"></span></label></div>
               </div>
             </section>
 
             <section class="setting-card">
-              <header><h2>存储与缓存</h2><p>管理 WebUI 生成的本地临时缓存文件。</p></header>
+              <header><h2 data-i18n="settings.cacheTitle">存储与缓存</h2><p data-i18n="settings.cacheSub">管理 WebUI 生成的本地临时缓存文件。</p></header>
               <div class="setting-row">
                 <div class="setting-label">
-                  <div>图库缩略图缓存</div>
-                  <p id="thumb-cache-info">正在统计…</p>
+                  <div data-i18n="settings.thumbCache">图库缩略图缓存</div>
+                  <p id="thumb-cache-info" data-i18n="settings.thumbCalculating">正在统计…</p>
                 </div>
                 <div class="setting-control end cache-actions">
-                  <button type="button" class="btn btn-sm" id="btn-clear-thumbs"><svg><use href="#i-trash"/></svg>清理缓存</button>
+                  <button type="button" class="btn btn-sm" id="btn-clear-thumbs"><svg><use href="#i-trash"/></svg><span data-i18n="settings.clearCache">清理缓存</span></button>
                   <span class="help-wrap">
-                    <button type="button" class="help-btn" id="btn-thumb-help" aria-label="查看缩略图缓存说明" aria-expanded="false" aria-controls="thumb-help-pop" title="点击查看说明">
+                    <button type="button" class="help-btn" id="btn-thumb-help" data-i18n-aria="settings.thumbHelpAria" data-i18n-title="settings.thumbHelpTitle" aria-label="查看缩略图缓存说明" aria-expanded="false" aria-controls="thumb-help-pop" title="点击查看说明">
                       <svg><use href="#i-help"/></svg>
                     </button>
-                    <div class="help-pop hidden" id="thumb-help-pop" role="tooltip">
+                    <div class="help-pop hidden" id="thumb-help-pop" role="tooltip" data-i18n-html="settings.thumbHelpPopHtml">
                       <div class="help-pop-title">什么是缩略图缓存？</div>
                       <p>浏览「本地图库」时，WebUI 会把图片压缩为较小缩略图缓存在 <code>webui/.thumbs/</code> 中，用于加速页面加载。</p>
                       <p>清理缓存<strong>不会删除</strong>已下载的原图、视频或去重记录；下次浏览图库时会按需重新生成。</p>
@@ -450,11 +456,11 @@
   <div class="lightbox hidden" id="lightbox">
     <div class="lb-top">
       <span class="lb-caption" id="lb-caption"></span>
-      <button class="lb-btn" id="lb-close" title="关闭 (Esc)"><svg><use href="#i-x"/></svg></button>
+      <button class="lb-btn" id="lb-close" data-i18n-title="lb.close" title="关闭 (Esc)"><svg><use href="#i-x"/></svg></button>
     </div>
-    <button class="lb-btn lb-nav lb-prev" id="lb-prev" title="上一张 (←)"><svg><use href="#i-chevron-left"/></svg></button>
+    <button class="lb-btn lb-nav lb-prev" id="lb-prev" data-i18n-title="lb.prev" title="上一张 (←)"><svg><use href="#i-chevron-left"/></svg></button>
     <div class="lb-stage" id="lb-stage"></div>
-    <button class="lb-btn lb-nav lb-next" id="lb-next" title="下一张 (→)"><svg><use href="#i-chevron-right"/></svg></button>
+    <button class="lb-btn lb-nav lb-next" id="lb-next" data-i18n-title="lb.next" title="下一张 (→)"><svg><use href="#i-chevron-right"/></svg></button>
   </div>
 
   <div class="toasts" id="toasts"></div>
@@ -474,11 +480,11 @@
         </div>
         <div class="task-metrics"></div>
         <div class="task-actions">
-          <button class="icon-btn act-logs" title="日志"><svg><use href="#i-terminal"/></svg></button>
-          <button class="icon-btn act-open" title="打开保存目录"><svg><use href="#i-folder-open"/></svg></button>
-          <button class="icon-btn act-retry" title="重新运行"><svg><use href="#i-retry"/></svg></button>
-          <button class="icon-btn act-cancel danger" title="取消任务"><svg><use href="#i-stop"/></svg></button>
-          <button class="icon-btn act-delete" title="删除记录"><svg><use href="#i-trash"/></svg></button>
+          <button class="icon-btn act-logs" data-i18n-title="task.actLogs" title="日志"><svg><use href="#i-terminal"/></svg></button>
+          <button class="icon-btn act-open" data-i18n-title="task.actOpen" title="打开保存目录"><svg><use href="#i-folder-open"/></svg></button>
+          <button class="icon-btn act-retry" data-i18n-title="task.actRetry" title="重新运行"><svg><use href="#i-retry"/></svg></button>
+          <button class="icon-btn act-cancel danger" data-i18n-title="task.actCancel" title="取消任务"><svg><use href="#i-stop"/></svg></button>
+          <button class="icon-btn act-delete" data-i18n-title="task.actDelete" title="删除记录"><svg><use href="#i-trash"/></svg></button>
         </div>
       </div>
       <div class="task-progress"><div class="bar"></div></div>
@@ -486,6 +492,7 @@
     </article>
   </template>
 
+  <script src="/static/i18n.js"></script>
   <script src="/static/app.js"></script>
 </body>
 </html>

@@ -85,8 +85,14 @@ def create_app(config_path: str = 'settings.json', max_parallel: int = 1) -> Fas
     def cookie_status(cfg: AppConfig) -> Dict[str, Any]:
         try:
             cfg.resolve_auth()
-            src = cfg.cookie if 'auth_token=' not in cfg.cookie else '手动填写的 auth_token'
-            return {'ok': True, 'message': f'已就绪（{src}）'}
+            is_manual = 'auth_token=' in cfg.cookie
+            src = '手动填写的 auth_token' if is_manual else cfg.cookie
+            return {
+                'ok': True,
+                'source': '' if is_manual else cfg.cookie,
+                'is_manual': is_manual,
+                'message': f'已就绪（{src}）',
+            }
         except Exception as e:  # noqa: BLE001
             return {'ok': False, 'message': str(e)}
 
